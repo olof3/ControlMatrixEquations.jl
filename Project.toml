@@ -1,0 +1,8 @@
+name = "SylvesterEquations"
+uuid = "2bbb31c9-cd98-4d3b-8705-afc24b235353"
+authors = ["olof3 <olof3@users.noreply.github.com>"]
+version = "0.1.0"
+
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
