@@ -53,7 +53,7 @@ A solution exists unless `A` and `B` have eigenvalues `λ` and `μ` such that λ
 function sylvd(A, B, C, ::Val{:bartstew})
     _check_sylv_inputs(A, B, C)
 
-    At2, UA = (A isa UniformScaling ? I(size(A,1), I : schur(A'))
+    At2, UA = schur(A')
     B2, UB = schur(B)
 
     C2 = UA'*C*UB
@@ -148,8 +148,6 @@ function _sylvc_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Va
     # The user should preferably use sylvc_schur! and lyapc_schur!
     # I.e., this method does not check whether C is hermitian
     # The matrix C is successively replaced with the solution X
-    # if alg === Val(:lyap), only the lower triangle of C is computed
-    # after which an Hermitian view is applied
 
     # get block indices and nbr of blocks
     if schurtype === Val(:real)
@@ -163,13 +161,16 @@ function _sylvc_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Va
     @inbounds for j=1:nblocksb
         i0 = (alg === Val(:lyap) ? j : 1)
 
-        # if j > 1; mul!(C[i0:nblocksa,j], C[i0:nblocksa, 1:j-1], B[1:j-1, j], 1, -1); end # Could move this out?
-        # figure out the row indexing
+        if schurtype === Val(:real) # Only seems to be helpful in the real case
+            @views mul!(C[ba[i0][1]:end, bb[j]], C[ba[i0][1]:end, 1:bb[j][1]-1], B[1:bb[j][1]-1, bb[j]], -1, 1)
+        else
+            @views mul!(C[i0:end,j], C[i0:end, 1:j-1], B[1:j-1, j], -1, 1)
+        end
 
         for i=i0:nblocksa
             if schurtype === Val(:complex)
                 if i > 1; C[i,j] -= sum(A[i, k] * C[k, j] for k=1:i-1); end
-                if j > 1; C[i,j] -= sum(C[i, k] * B[k, j] for k=1:j-1); end
+                #if j > 1; C[i,j] -= sum(C[i, k] * B[k, j] for k=1:j-1); end
 
                 C[i,j] = sylvc(A[i, i], B[j, j], C[i, j]) # C[i,j] now contains  solution Y[i,j]
 
@@ -181,8 +182,7 @@ function _sylvc_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Va
                 Bjj = view(B, bb[j], bb[j])
                 Cij = view(C, ba[i], bb[j])
 
-                if i > 1; @views mul!(Cij, A[ba[i], 1:ba[i-1][end]], C[1:ba[i-1][end], bb[j]], -1, 1); end
-                if j > 1; @views mul!(Cij, C[ba[i], 1:bb[j-1][end]], B[1:bb[j-1][end], bb[j]], -1, 1); end
+                @views mul!(Cij, A[ba[i], 1:ba[i][1]-1], C[1:ba[i][1]-1, bb[j]], -1, 1) # adds nothigng for i=1
 
                 _sylvc!(Aii, Bjj, Cij) # Cij now contains the solution Yij
 

@@ -7,10 +7,7 @@ B = reshape(1:4, 2, 2)
 X = reshape(1:6, 3, 2)
 Xs = Matrix(Symmetric(reshape(1:9, 3, 3)))
 
-lyapc(A, lyapc_rhs(A, Xs), Val(:bartstew)) ≈ Xs
 
-
-lyapc_rhs(A, Xs)
 @test sylvc(A, B, sylvc_rhs(A, B, X), Val(:naive)) ≈ X
 @test sylvc(Ac, B, sylvc_rhs(Ac, B, X), Val(:naive)) ≈ X
 @test lyapc(A, lyapc_rhs(A, Xs), Val(:naive)) ≈ Xs
