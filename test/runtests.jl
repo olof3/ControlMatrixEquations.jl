@@ -4,7 +4,7 @@ using Test, LinearAlgebra, Random
 
 my_tests = [
             "test_utilities",
-            "test_sylvlyap_schur",
+            #"test_sylvlyap_schur",
             "test_sylvlyap_naive",
             "test_sylvlyap",
             ]
@@ -17,6 +17,6 @@ lyapc_rhs = (A, X) -> -Matrix(Hermitian(A*X + X*A'))
 lyapd_rhs = (A, X) -> -Matrix(Hermitian(A*X*A' - X))
 
 for test in my_tests
-    println(test)
+    println("In $test.jl:")
     include("$(test).jl")
 end

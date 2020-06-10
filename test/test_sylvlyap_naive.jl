@@ -1,5 +1,6 @@
 using SymPy
 
+@testset "small_eqs_naive_explicit" begin
 
 A = reshape(1:9, 3, 3) + I # Without the I there are numerical problems..
 Ac = reshape((1:9) .+ im*(9:-1:1), 3, 3) + I
@@ -15,8 +16,13 @@ Xs = Matrix(Symmetric(reshape(1:9, 3, 3)))
 
 @test sylvd(A, B, sylvd_rhs(A, B, X), Val(:naive)) ≈ X
 @test sylvd(Ac, B, sylvd_rhs(Ac, B, X), Val(:naive)) ≈ X
+@test lyapc(A, lyapc_rhs(A, Xs), Val(:naive)) ≈ Xs
+@test lyapc(Ac, lyapc_rhs(Ac, Xs), Val(:naive)) ≈ Xs
+
+end
 
 
+@testset "small_eqs_sympy" begin
 
 @vars a1 a2 real=true
 @vars b1 b2 real=true
@@ -34,3 +40,5 @@ Xs = [x1 x2; x2 x3]
 @test sylvc(A, B, sylvc_rhs(A, B, X)) == X
 @test lyapc(A, lyapc_rhs(A, Xs)) == Xs
 @test sylvd(A, B, sylvd_rhs(A, B, X)) == X
+
+end
