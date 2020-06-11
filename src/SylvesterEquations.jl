@@ -14,8 +14,6 @@ include("utilities.jl")
 include("sylv_2x2.jl")
 include("sylvlyap_bartstew.jl")
 include("sylvlyap_naive.jl")
-include("lyap_kpik.jl")
-
 
 
 

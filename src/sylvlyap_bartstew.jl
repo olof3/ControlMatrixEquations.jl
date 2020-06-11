@@ -1,7 +1,7 @@
 """
     sylvc(A, B, C) -> X
 
-Find the solution `X` to the continuous-time Sylvester equation
+Compute the solution `X` to the continuous-time Sylvester equation
 
 `AX + XB = C`
 
@@ -27,7 +27,7 @@ end
 """
     sylvd(A, B, C) -> X
 
-Find the solution `X` to the discrete-time Sylvester equation
+Compute the solution `X` to the discrete-time Sylvester equation
 
 `AXB - X = C`
 
@@ -53,7 +53,7 @@ end
 """
     lyapc(A, Q) -> X
 
-Computes the solution `X` of the continuous-time Lyapunov equation
+Compute the solution `X` of the continuous-time Lyapunov equation
 
 `AX + XA' + Q = 0`
 
@@ -79,7 +79,7 @@ end
 """
     X = lyapd(A, Q) -> X
 
-Find the solution `X` to the discrete-time Lyapunov equation
+Compute the solution `X` to the discrete-time Lyapunov equation
 
 `AXA' - X + Q = 0`
 
@@ -110,7 +110,7 @@ end
 """
     sylvc_schur!(A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix) -> X
 
-Find the solution `X` to the continuous-time Sylvester equation
+Compute the solution `X` to the continuous-time Sylvester equation
 
 `AX + XB = C`
 
@@ -145,7 +145,7 @@ function _sylvc_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Va
         for i=i0:size(A, 1)
             if i > 1; C[i,j] -= sum(A[i, k] * C[k, j] for k=1:i-1); end
 
-            C[i,j] = sylvc(A[i, i], B[j, j], C[i, j]) # C[i,j] now contains  solution Y[i,j]
+            C[i,j] = sylvc(A[i, i], B[j, j], C[i, j]) # C[i,j] now contains  solution X[i,j]
 
             if alg === Val(:lyap) && i > j; C[j,i] = conj(C[i,j]); end
         end
@@ -169,7 +169,7 @@ function _sylvc_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Va
 
             @views mul!(Cij, A[ba[i], 1:ba[i][1]-1], C[1:ba[i][1]-1, bb[j]], -1, 1)
 
-            _sylvc!(Aii, Bjj, Cij) # Cij now contains the solution Yij
+            _sylvc!(Aii, Bjj, Cij) # Cij now contains the solution Xij
 
             if alg === Val(:lyap) && i > j
                 for l=bb[j], k=ba[i]
@@ -184,7 +184,7 @@ end
 """
     sylvd_schur!(A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix) -> X
 
-Solve the discrete-time Sylvester equation
+Compute the solution `X` to the discrete-time Sylvester equation
 
 `AXB - X = C`
 
@@ -211,17 +211,19 @@ _sylvd_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Val{:lyap}}
 
 function _sylvd_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Val{:lyap}}, ::Val{:complexschur})
 
-    G = zeros(eltype(C), size(A,1), size(B, 1)) # Keep track of A*X for improved performance
+    G = zeros(eltype(C), size(A,1), size(B, 1)) # G keeps track of A*X for improved performance
 
     @inbounds for j=1:size(B, 1)
         i0 = (alg === Val(:lyap) ? j : 1)
 
-        for i=i0:size(A, 1)                    # Compute Gij up to the contribution from Aii*Yij which is added at the end of each iteration
+        for i=i0:size(A, 1)
+
+            # Compute Gij up to the contribution from Aii*Xij which is added at the end of each iteration
             if i > 1; G[i,j] += sum(A[i,k] * C[k,j] for k=1:i-1); end
 
             C[i,j] -= sum(G[i,k] * B[k,j] for k=1:j)
 
-            C[i,j] = sylvd(A[i,i], B[j,j], C[i,j]) # C[i,j] now contains  solution Y[i,j]
+            C[i,j] = sylvd(A[i,i], B[j,j], C[i,j]) # C[i,j] now contains  solution X[i,j]
 
             if alg === Val(:lyap) && i > j
                 C[j,i] = conj(C[i,j])
@@ -234,7 +236,7 @@ function _sylvd_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Va
 end
 function _sylvd_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Val{:lyap}}, ::Val{:realschur})
 
-    G = zeros(eltype(C), size(A,1), size(B, 1)) # Keep track of A*X for improved performance
+    G = zeros(eltype(C), size(A,1), size(B, 1)) # G keeps track of A*X for improved performance
 
     # get block dimensions, block indices, nbr of blocks
     _, ba, nblocksa = _schurstructure(A, Val(:L)) # A is assumed upper triangualar
@@ -254,7 +256,7 @@ function _sylvd_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Va
 
             @views mul!(Cij, G[ba[i], 1:bb[j][end]], B[1:bb[j][end], bb[j]], -1, 1)
 
-            _sylvd!(Aii, Bjj, Cij) # Cij now contains the solution Yij
+            _sylvd!(Aii, Bjj, Cij) # Cij now contains the solution Xij
 
             if alg === Val(:lyap) && i > j
                 for l=bb[j], k=ba[i] # Avoids aliasing of copyto!
