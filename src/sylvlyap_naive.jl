@@ -51,4 +51,4 @@ function lyapc(A, Q, ::Val{:naive}) # Only works for real matrices A
 
     return X
 end
-lyapd(A, Q, ::Val{:naive}) = sylvd(A, A', lmul!(-1,-Q), Val(:naive)) # No specilized method yet
+lyapd(A, Q, ::Val{:naive}) = sylvd(A, A', -Q, Val(:naive)) # No specilized method yet
