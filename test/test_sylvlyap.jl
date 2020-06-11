@@ -31,5 +31,13 @@ end
 @test lyapd(0.5I, lyapd_rhs(0.5I, Xs)) ≈ Xs
 @test lyapc(0.5I, lyapc_rhs(0.5I, Xs)) ≈ Xs
 
+end
+
+
+
+@testset "errors" begin
+
+@test_throws ErrorException SylvesterEquations.lyapc_schur!(ones(2,2), [0 1; 0 1])
+@test_throws ErrorException SylvesterEquations.lyapd_schur!(ones(2,2), [0 1; 0 1])
 
 end

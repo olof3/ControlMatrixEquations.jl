@@ -4,7 +4,7 @@ using Test, LinearAlgebra, Random
 
 my_tests = [
             "test_utilities",
-            #"test_sylvlyap_schur",
+            "test_sylvlyap_schur",
             "test_sylvlyap_naive",
             "test_sylvlyap",
             ]

@@ -10,9 +10,10 @@ for (A, B, X, tsname) in [(fill(2.0, 1, 1), fill(3.0, 1, 1), fill(1.0, 1, 1), "1
                   ([-2 0; 2 3], [3.0 4; 0 5], [1.0 2; 3 4], "2x2 tringular"),
                   ([-2.0 0; 2 3], fill(5.0, 1, 1), [1.0; 2][:,:], "2x1"),
                   ([-2 0; 2 3], fill(5, 1, 1), [1; 2][:,:], "2x1"),
-                  (big.([-2.0 0; 2 3]), fill(5//2, 1, 1), [1; 2][:,:], "2x1"),
                   (fill(2.0, 1, 1), [3.0 4; 0 5], [1.0 2], "1x2"),
-                  (big.(A3), Rational.(B3), X3, "3x3"),
+                  (float(A3), float(B3), float(X3), "3x3 (Float64)"),
+                  (float(A3), float(B3), X3, "3x3 (Float64)"),
+                  (A3, B3, X3, "3x3"),
                   ]
 
     # Generate complex version, while keeping the structure
@@ -34,19 +35,19 @@ for (A, B, X, tsname) in [(fill(2.0, 1, 1), fill(3.0, 1, 1), fill(1.0, 1, 1), "1
     end
 
     if size(X,1) == size(X,2)
-        Xherm = X + X'
-        Xcherm = Xc + Xc'
+        Xh = X + X'
+        Xch = Xc + Xc'
 
-        @testset "lyap(c/d)_schur!, $(tsname) $(eltype.((A, Xherm)))" begin
-            @test SylvesterEquations.lyapc_schur!(A, lyapc_rhs(A, Xherm)) ≈ Xherm
-            @test SylvesterEquations.lyapc_schur!(Ac, lyapc_rhs(Ac, Xherm)) ≈ Xherm
-            @test SylvesterEquations.lyapc_schur!(A, lyapc_rhs(A, Xcherm)) ≈ Xcherm
-            @test SylvesterEquations.lyapc_schur!(Ac, lyapc_rhs(Ac, Xcherm)) ≈ Xcherm
+        @testset "lyap(c/d)_schur!, $(tsname) $(eltype.((A, Xh)))" begin
+            @test SylvesterEquations.lyapc_schur!(A, lyapc_rhs(A, Xh)) ≈ Xh
+            @test SylvesterEquations.lyapc_schur!(Ac, lyapc_rhs(Ac, Xh)) ≈ Xh
+            @test SylvesterEquations.lyapc_schur!(A, lyapc_rhs(A, Xch)) ≈ Xch
+            @test SylvesterEquations.lyapc_schur!(Ac, lyapc_rhs(Ac, Xch)) ≈ Xch
 
-            @test SylvesterEquations.lyapd_schur!(A, lyapd_rhs(A, Xherm)) ≈ Xherm
-            @test SylvesterEquations.lyapd_schur!(Ac, lyapd_rhs(Ac, Xherm)) ≈ Xherm
-            @test SylvesterEquations.lyapd_schur!(A, lyapd_rhs(A, Xcherm)) ≈ Xcherm
-            @test SylvesterEquations.lyapd_schur!(Ac, lyapd_rhs(Ac, Xcherm)) ≈ Xcherm
+            @test SylvesterEquations.lyapd_schur!(A, lyapd_rhs(A, Xh)) ≈ Xh
+            @test SylvesterEquations.lyapd_schur!(Ac, lyapd_rhs(Ac, Xh)) ≈ Xh
+            @test SylvesterEquations.lyapd_schur!(A, lyapd_rhs(A, Xch)) ≈ Xch
+            @test SylvesterEquations.lyapd_schur!(Ac, lyapd_rhs(Ac, Xch)) ≈ Xch
         end
     end
 end
