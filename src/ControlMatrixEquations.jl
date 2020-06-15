@@ -50,5 +50,7 @@ lyapd(a::Number, q::Number) = sylvd(a, a', -q)
 
 # The following should preferably be fixed in LinearAlgebra, there is an issue posted...
 LinearAlgebra.schur(A::LinearAlgebra.AdjOrTrans{T}) where T = schur!(LinearAlgebra.copy_oftype(A, LinearAlgebra.eigtype(T)))
+LinearAlgebra.schur(A::AbstractMatrix{T}) where T = schur!(LinearAlgebra.copy_oftype(A, LinearAlgebra.eigtype(T)))
+LinearAlgebra.schur(A::AbstractMatrix{T}, B::AbstractMatrix{T}) where T = schur!(LinearAlgebra.copy_oftype(A, LinearAlgebra.eigtype(T)), LinearAlgebra.copy_oftype(B, LinearAlgebra.eigtype(T)))
 
 end # module

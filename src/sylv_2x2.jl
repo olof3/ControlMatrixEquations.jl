@@ -14,6 +14,13 @@ end
 
     x
 end
+@inline function sylvg(a::Number, b::Number, c::Number, e::Number, f::Number)
+    x = c / (a*b + e*f)
+
+    if !isfinite(x); error("Matrix equation has no solution, see ?sylvc or ?lyapc"); end
+
+    x
+end
 
 
 """
