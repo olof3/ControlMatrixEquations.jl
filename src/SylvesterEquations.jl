@@ -44,5 +44,6 @@ lyapd(A, Q, ::Val{:infer}; kwargs...) = lyapd(A, Q, _infer_sylvalg(A,A,Q); kwarg
 
 # The following should preferably be fixed in LinearAlgebra, there is an issue posted...
 LinearAlgebra.schur(A::AbstractMatrix{T}) where T = schur!(LinearAlgebra.copy_oftype(A, LinearAlgebra.eigtype(T)))
+LinearAlgebra.schur(A::AbstractMatrix{T}, B::AbstractMatrix{T}) where T = schur!(LinearAlgebra.copy_oftype(A, LinearAlgebra.eigtype(T)), LinearAlgebra.copy_oftype(B, LinearAlgebra.eigtype(T)))
 
 end # module
