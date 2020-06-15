@@ -15,6 +15,8 @@ include("sylv_2x2.jl")
 include("sylvlyap_bartstew.jl")
 include("sylvlyap_naive.jl")
 
+include("lyap_hammarling.jl")
+
 
 
 # Infer the algorithm based on the type of the problem data
