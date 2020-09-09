@@ -3,17 +3,19 @@
     lyapc(A, B, ::Val{:hammarling}) -> C
 
 returns an upper-trinagular Cholesky factor `C` such that
-`X = C'*C`
+`X = C'*C` solves `A*X + X*B + B'*B = 0`.
 
-solves `A*X + X*B + B'*B = 0`.
+The matrix `A` must be Hurwitz.
 
 Based on
 
-**Sorensen, D. C., & Zhou, Y.** (2003). Direct methods for matrix Sylvester and
+[1] **Sorensen, D. C., & Zhou, Y.** (2003). Direct methods for matrix Sylvester and
 Lyapunov equations. Journal of Applied Mathematics, 2003(6), 277-303.
 """
 
 # FIXME, double check transposes/conjugation etc
+
+# FIXME: Only handles the case that A is Upper triangular
 function lyapc(A, B0, ::Val{:hammarling})
 
     B = copy(B0)
@@ -36,7 +38,7 @@ function lyapc(A, B0, ::Val{:hammarling})
 
         # store -btmp in the space allocated for u
         @views u .= -τ .* A[1:j-1, j]
-        @views mul!(u, B[1:j-1, :], conj!(bh), -1/τ, 1) # -(μ1/μ)
+        @views mul!(u, B[1:j-1, :], conj!(bh), -1/τ, 1)
 
         # replace btmp so that U[1:j-1,j] contains the solution
         @views _ldiv!(UpperTriangular(A[1:j-1, 1:j-1]), u, shift=conj(A[j,j]))
@@ -49,7 +51,7 @@ function lyapc(A, B0, ::Val{:hammarling})
 
     U[1,1] = norm(B[1, :]) / sqrt(-2*real(A[1,1]))
 
-    return U
+    return Cholesky(U, :U, 0)
 end
 
 
@@ -77,5 +79,3 @@ function _ldiv!(A::UpperTriangular, b::AbstractVector; shift=0)
     end
     b
 end
-
-# triangular_solve
