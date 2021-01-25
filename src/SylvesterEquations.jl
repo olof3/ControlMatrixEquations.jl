@@ -8,6 +8,7 @@ export lyapc, lyapd
 
 export HermitianLowRank
 
+const AbstractNumOrArray = Union{Number, AbstractVecOrMat}
 
 include("HermitianLowRank.jl")
 include("utilities.jl")

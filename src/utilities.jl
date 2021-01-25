@@ -1,4 +1,24 @@
 """
+    _similarity_transform!(A, S::Diagonal)
+
+Compute `S\\A*S` in place. (currently only supports Diagonal S)
+"""
+function _similarity_transform!(A, S::Diagonal)
+    rmul!(A, S)
+    ldiv!(S, A)
+    return A
+end
+
+
+to_matrix(T, A::AbstractVector) = Matrix{T}(reshape(A, length(A), 1))
+to_matrix(T, A::AbstractMatrix) = convert(Matrix{T}, A)
+to_matrix(T, A::Number) = fill(T(A), 1, 1)
+# Handle Adjoint Matrices
+to_matrix(T, A::Adjoint{R, MT}) where {R<:Number, MT<:AbstractMatrix} = to_matrix(T, MT(A))
+
+
+
+"""
     `_schurstructure(R::AbstractMatrix, ul=Union{Val{:U}, Val{:L}}) -> (b, d, nblocks)`
 
 Return the block strucutre of an upper quasi-traingular Schur matrix `R`.

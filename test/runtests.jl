@@ -2,6 +2,8 @@ using SylvesterEquations
 using Test, LinearAlgebra, Random
 
 
+include("framework.jl")
+
 my_tests = [
             "test_utilities",
             "test_sylvlyap_schur",
