@@ -42,16 +42,16 @@ end
 
 function _check_ARE_inputs(A, B, Q, R, S)
     # Convert all inputs to Matrix{T}
-    T = promote_type(eltype(A), eltype(B), eltype(Q), isnothing(S) ? Union{} : eltype(S))
+    T = float(promote_type(eltype(A), eltype(B), eltype(Q), isnothing(S) ? Union{} : eltype(S)))
 
     A, B = to_matrix(T, A), to_matrix(T, B)
     n, m = size(B)
     Q = Q isa UniformScaling ? Matrix{T}(Q,n,n) : to_matrix(T, Q)
-    R = R isa UniformScaling ? Matrix{T}(R,m,m) : to_matrix(R, Q) # There would be small improvements for cases where this conversion could be avoided
+    R = R isa UniformScaling ? Matrix{T}(R,m,m) : to_matrix(T, R) # There would be small improvements for cases where this conversion could be avoided
     S = to_matrix(T, S)
 
 
-
+    # Check matrix sizes and structure of R and Q
     size(A) != (n, n) && error("A and B have mismatched sizes $(size(A)) vs $(size(B))")
     size(Q) != (n, n) && error("A and Q have mismatched sizes $(size(A)) vs $(size(Q))")
     size(R) != (m, m) && error("B and R have mismatched sizes $(size(B)) vs $(size(R))")
@@ -75,7 +75,7 @@ function _ared(A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}; stable_so
     M = [A zeros(n,n);
          -Q Matrix{T}(I, n, n)]
 
-    return _sovle_ARE_pencil(L, M, Val(:c), stable_solution)
+    return _sovle_ARE_pencil(L, M, Val(:d), stable_solution)
 end
 
 """
