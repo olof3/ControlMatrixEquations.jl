@@ -22,15 +22,15 @@ for (A, B, X, tsname) in [(fill(2.0, 1, 1), fill(3.0, 1, 1), fill(1.0, 1, 1), "1
     Xc = X .* (1 + im)
 
     @testset "sylv(c/d)_schur!, $(tsname) $(eltype.((A, B, X)))" begin
-        @test SylvesterEquations.sylvc_schur!(A, B, sylvc_rhs(A, B, X)) ≈ X
-        @test SylvesterEquations.sylvc_schur!(Ac, B, sylvc_rhs(Ac, B, X)) ≈ X
-        @test SylvesterEquations.sylvc_schur!(A, B, sylvc_rhs(A, B, Xc)) ≈ Xc
-        @test SylvesterEquations.sylvc_schur!(Ac, Bc, sylvc_rhs(Ac, Bc, Xc)) ≈ Xc
+        @test ControlMatrixEquations.sylvc_schur!(A, B, sylvc_rhs(A, B, X)) ≈ X
+        @test ControlMatrixEquations.sylvc_schur!(Ac, B, sylvc_rhs(Ac, B, X)) ≈ X
+        @test ControlMatrixEquations.sylvc_schur!(A, B, sylvc_rhs(A, B, Xc)) ≈ Xc
+        @test ControlMatrixEquations.sylvc_schur!(Ac, Bc, sylvc_rhs(Ac, Bc, Xc)) ≈ Xc
 
-        @test SylvesterEquations.sylvd_schur!(A, B, sylvd_rhs(A, B, X)) ≈ X
-        @test SylvesterEquations.sylvd_schur!(Ac, B, sylvd_rhs(Ac, B, X)) ≈ X
-        @test SylvesterEquations.sylvd_schur!(A, B, sylvd_rhs(A, B, Xc)) ≈ Xc
-        @test SylvesterEquations.sylvd_schur!(Ac, Bc, sylvd_rhs(Ac, Bc, Xc)) ≈ Xc
+        @test ControlMatrixEquations.sylvd_schur!(A, B, sylvd_rhs(A, B, X)) ≈ X
+        @test ControlMatrixEquations.sylvd_schur!(Ac, B, sylvd_rhs(Ac, B, X)) ≈ X
+        @test ControlMatrixEquations.sylvd_schur!(A, B, sylvd_rhs(A, B, Xc)) ≈ Xc
+        @test ControlMatrixEquations.sylvd_schur!(Ac, Bc, sylvd_rhs(Ac, Bc, Xc)) ≈ Xc
 
     end
 
@@ -39,15 +39,15 @@ for (A, B, X, tsname) in [(fill(2.0, 1, 1), fill(3.0, 1, 1), fill(1.0, 1, 1), "1
         Xch = Xc + Xc'
 
         @testset "lyap(c/d)_schur!, $(tsname) $(eltype.((A, Xh)))" begin
-            @test SylvesterEquations.lyapc_schur!(A, lyapc_rhs(A, Xh)) ≈ Xh
-            @test SylvesterEquations.lyapc_schur!(Ac, lyapc_rhs(Ac, Xh)) ≈ Xh
-            @test SylvesterEquations.lyapc_schur!(A, lyapc_rhs(A, Xch)) ≈ Xch
-            @test SylvesterEquations.lyapc_schur!(Ac, lyapc_rhs(Ac, Xch)) ≈ Xch
+            @test ControlMatrixEquations.lyapc_schur!(A, lyapc_rhs(A, Xh)) ≈ Xh
+            @test ControlMatrixEquations.lyapc_schur!(Ac, lyapc_rhs(Ac, Xh)) ≈ Xh
+            @test ControlMatrixEquations.lyapc_schur!(A, lyapc_rhs(A, Xch)) ≈ Xch
+            @test ControlMatrixEquations.lyapc_schur!(Ac, lyapc_rhs(Ac, Xch)) ≈ Xch
 
-            @test SylvesterEquations.lyapd_schur!(A, lyapd_rhs(A, Xh)) ≈ Xh
-            @test SylvesterEquations.lyapd_schur!(Ac, lyapd_rhs(Ac, Xh)) ≈ Xh
-            @test SylvesterEquations.lyapd_schur!(A, lyapd_rhs(A, Xch)) ≈ Xch
-            @test SylvesterEquations.lyapd_schur!(Ac, lyapd_rhs(Ac, Xch)) ≈ Xch
+            @test ControlMatrixEquations.lyapd_schur!(A, lyapd_rhs(A, Xh)) ≈ Xh
+            @test ControlMatrixEquations.lyapd_schur!(Ac, lyapd_rhs(Ac, Xh)) ≈ Xh
+            @test ControlMatrixEquations.lyapd_schur!(A, lyapd_rhs(A, Xch)) ≈ Xch
+            @test ControlMatrixEquations.lyapd_schur!(Ac, lyapd_rhs(Ac, Xch)) ≈ Xch
         end
     end
 end

@@ -5,7 +5,7 @@
 Find the stabilizing solution `X` to the continuous-time Riccati equation
 `A'X + XA - (XB + S)/R(XB + S)' + Q`
 """
-function arec(A::AbstractNumOrArray, B::AbstractNumOrArray, Q::AbstractNumOrArray, R::AbstractNumOrArray, S=nothing; force_esp=false)
+function arec(A::AbstractNumOrArray, B::AbstractNumOrArray, Q::Union{AbstractNumOrArray,UniformScaling}, R::Union{AbstractNumOrArray,UniformScaling}, S=nothing; force_esp=false)
     A, B, Q, R, S = _check_ARE_inputs(A, B, Q, R, S)
 
     if cond(R) <= 1e4 && !force_esp# FIXME: Think this condition through
@@ -44,9 +44,13 @@ function _check_ARE_inputs(A, B, Q, R, S)
     # Convert all inputs to Matrix{T}
     T = promote_type(eltype(A), eltype(B), eltype(Q), isnothing(S) ? Union{} : eltype(S))
 
-    A, B, Q, R, S = to_matrix(T, A), to_matrix(T, B), to_matrix(T, Q), to_matrix(T, R), to_matrix(T, S)
-
+    A, B = to_matrix(T, A), to_matrix(T, B)
     n, m = size(B)
+    Q = Q isa UniformScaling ? Matrix{T}(Q,n,n) : to_matrix(T, Q)
+    R = R isa UniformScaling ? Matrix{T}(R,m,m) : to_matrix(R, Q) # There would be small improvements for cases where this conversion could be avoided
+    S = to_matrix(T, S)
+
+
 
     size(A) != (n, n) && error("A and B have mismatched sizes $(size(A)) vs $(size(B))")
     size(Q) != (n, n) && error("A and Q have mismatched sizes $(size(A)) vs $(size(Q))")

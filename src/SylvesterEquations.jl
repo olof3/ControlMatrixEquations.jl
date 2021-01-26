@@ -1,4 +1,4 @@
-module SylvesterEquations
+module ControlMatrixEquations
 
 using LinearAlgebra
 using StaticArrays
@@ -23,7 +23,9 @@ include("riccati.jl")
 
 # Infer the algorithm based on the type of the problem data
 function _infer_sylvalg(A, B, C)
-    if hasmethod(schur!, (typeof(A),)) && hasmethod(schur!, (typeof(B),))
+    T = promote_type(eltype(A), eltype(B), Float64)
+    println(T)
+    if hasmethod(schur!, (Matrix{T},))
         return Val(:bartstew)
     else
         return Val(:naive)

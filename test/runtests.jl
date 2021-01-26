@@ -1,4 +1,4 @@
-using SylvesterEquations
+using ControlMatrixEquations
 using Test, LinearAlgebra, Random
 
 

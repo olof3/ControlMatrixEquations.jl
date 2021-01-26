@@ -1,4 +1,4 @@
-name = "SylvesterEquations"
+name = "ControlMatrixEquations"
 uuid = "2bbb31c9-cd98-4d3b-8705-afc24b235353"
 authors = ["olof3 <olof3@users.noreply.github.com>"]
 version = "0.1.0"

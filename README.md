@@ -1,8 +1,7 @@
-# SylvesterEquations.jl
-Solvers for Sylvester and Lyapunov Equations
+# ControlMatrixEquations.jl
+Solvers for Sylvester, Lyapunov and Riccati Equations
 
-[![Build Status](https://travis-ci.org/olof3/SylvesterEquations.jl.svg?branch=master)](https://travis-ci.org/olof3/SylvesterEquations.jl)
-[![codecov](https://codecov.io/gh/olof3/SylvesterEquations.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/olof3/SylvesterEquations.jl)
+[![codecov](https://codecov.io/gh/olof3/ControlMatrixEquations.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/olof3/ControlMatrixEquations.jl)
 
 
 
