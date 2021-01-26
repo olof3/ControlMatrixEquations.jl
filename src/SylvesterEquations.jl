@@ -5,6 +5,7 @@ using StaticArrays
 
 export sylvc, sylvd
 export lyapc, lyapd
+export arec, ared
 
 export HermitianLowRank
 
@@ -12,10 +13,12 @@ const AbstractNumOrArray = Union{Number, AbstractVecOrMat}
 
 include("HermitianLowRank.jl")
 include("utilities.jl")
+
 include("sylv_2x2.jl")
 include("sylvlyap_bartstew.jl")
 include("sylvlyap_naive.jl")
 
+include("riccati.jl")
 
 
 # Infer the algorithm based on the type of the problem data
