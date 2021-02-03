@@ -151,6 +151,17 @@ function darex(id; δ=nothing, n=-1)
         Q = [9 6; 6 4]
         R = fill(δ, 1, 1)
         return A, B, Q, R, nothing, nothing
+    elseif id == "2.7"
+        if isnothing(ϵ); ϵ = 1e-6; end
+        A = [0      0.4        0           0
+             0       0       0.345         0
+             0    -0.524/ϵ  -0.465/ϵ  0.262/ϵ
+             0       0         0          1/ϵ]
+
+        B = [zeros(3); 1/ϵ]
+
+        Q = diagm([1, 0, 1, 1])
+        R = fill(1, 1, 1)
     elseif id == "4.1" # Hmm, this is essentially a time-delay, not integrators
         if n == -1; n = 20; end
         r = 0.001
