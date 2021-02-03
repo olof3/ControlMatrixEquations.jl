@@ -24,7 +24,6 @@ include("riccati.jl")
 # Infer the algorithm based on the type of the problem data
 function _infer_sylvalg(A, B, C)
     T = promote_type(eltype(A), eltype(B), Float64)
-    println(T)
     if hasmethod(schur!, (Matrix{T},))
         return Val(:bartstew)
     else
@@ -49,6 +48,6 @@ lyapd(A, Q, ::Val{:infer}; kwargs...) = lyapd(A, Q, _infer_sylvalg(A,A,Q); kwarg
 
 
 # The following should preferably be fixed in LinearAlgebra, there is an issue posted...
-LinearAlgebra.schur(A::AbstractMatrix{T}) where T = schur!(LinearAlgebra.copy_oftype(A, LinearAlgebra.eigtype(T)))
+LinearAlgebra.schur(A::LinearAlgebra.AdjOrTrans{T}) where T = schur!(LinearAlgebra.copy_oftype(A, LinearAlgebra.eigtype(T)))
 
 end # module

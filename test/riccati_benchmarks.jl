@@ -1,58 +1,13 @@
 import Random
 
-
-
+# [1] Jörn Abels & Peter Benner (1999) CAREX | A Collection of Benchmark Examples
+#     for Continuous-Time Algebraic Riccati Equations (Version 2.0)
+# [2] Jörn Abels & Peter Benner (1999) DAREX | A Collection of Benchmark Examples
+#     for Discrete-Time Algebraic Riccati Equations (Version 2.0)
 
 function carex(id; ϵ=nothing,n::Int=-1,p=1,seed=0)
     Random.seed!(seed)
-    if id == 0
-        A = randn(n,n)
-        B = randn(n,p)
-        C = randn(p,n)
-        Q = C'*C
-        R = fill(1, (1, 1))
-        S = randn(n,p)
-        return A, B, Q, R, S, nothing
-    elseif id == 1 # CAREX 2.1
-        if ϵ === nothing; ϵ = 1e-3; end
-        A = [1 0; 0 -2]
-        B = [ϵ; 0]
-        C = [1 1]
-        Q = C'*C
-        R = fill(1, (1, 1))
-        return A, B, Q, R, nothing, nothing
-    elseif id == 2 # CAREX 2.2
-        if ϵ === nothing; ϵ = 1e-3; end
-        A = [-0.01 0; 0 -0.02]
-        B = [0.1 0; 0.001 0.01]
-        C = [10 100]
-        Q = C'*C
-        R = [1+ϵ 1; 1 1]
-        return A, B, Q, R, nothing, nothing
-    elseif id == 3 # CAREX 2.3
-        if ϵ === nothing; ϵ = 1e-3; end
-        A = [0 0; ϵ 0]
-        B = [0; 1]
-        Q = Matrix{Float64}(I, 2, 2)
-        R = fill(1, (1, 1))
-        return A, B, Q, R, nothing, nothing
-    elseif id == 5 # CAREX 2.5
-        if ϵ === nothing; ϵ = 1e-3; end
-        A = [3-ϵ 1; 4 2-ϵ]
-        B = [1; 1]
-        Q = [4ϵ - 11   2ϵ - 5; 2ϵ - 5 2ϵ - 2]
-        R = fill(1, (1, 1))
-        X = [2 1; 1 1]
-        return A, B, Q, R, nothing, X
-    elseif id == 6 # CAREX 4.1
-        if n == -1; n = 20; end
-        r = 0.001
-        A = diagm(1 => ones(n-1))
-        B = [zeros(n-1, 1); 1]
-        Q = Matrix(I, n, n)
-        R = fill(r, 1, 1)
-        return A, B, Q, R, nothing, nothing
-    elseif id == 7 # CAREX 1.4 (binary distillation column)
+    if id == "1.4" # binary distillation column
         A = [-0.991   0.529   0.0     0.0     0.0     0.0     0.0     0.0
               0.522  -1.051   0.596   0.0     0.0     0.0     0.0     0.0
               0.0     0.522  -1.118   0.596   0.0     0.0     0.0     0.0
@@ -76,7 +31,7 @@ function carex(id; ϵ=nothing,n::Int=-1,p=1,seed=0)
 
         R = I(2)
         return A, B, Q, R, nothing, nothing
-    elseif id == 8 # CAREX 1.5 (tubular ammonia reactor)
+    elseif id == "1.5" # tubular ammonia reactor
         A = [ -4.019   5.12    0.0     0.0    -2.082     0.0     0.0    0.0    0.87
               -0.346   0.986   0.0     0.0    -2.34      0.0     0.0    0.0    0.97
               -7.909  15.407  -4.069   0.0    -6.45      0.0     0.0    0.0    2.68
@@ -95,37 +50,72 @@ function carex(id; ϵ=nothing,n::Int=-1,p=1,seed=0)
         Q = I(9)
         R = I(3)
         return A, B, Q, R, nothing, nothing
+    elseif id == "2.1"
+        if ϵ === nothing; ϵ = 1e-4; end
+        A = [1 0; 0 -2]
+        B = [ϵ; 0]
+        C = [1 1]
+        Q = C'*C
+        R = fill(1, (1, 1))
+        return A, B, Q, R, nothing, nothing
+    elseif id == "2.2"
+        if ϵ === nothing; ϵ = 1e-3; end
+        A = [-0.01 0; 0 -0.02]
+        B = [0.1 0; 0.001 0.01]
+        C = [10 100]
+        Q = C'*C
+        R = [1+ϵ 1; 1 1]
+        return A, B, Q, R, nothing, nothing
+    elseif id == "2.3"
+        if ϵ === nothing; ϵ = 1e-3; end
+        A = [0 ϵ; 0 0]
+        B = [0; 1]
+        Q = Matrix{Float64}(I, 2, 2)
+        R = fill(1, (1, 1))
+        return A, B, Q, R, nothing, nothing
+    elseif id == "2.5"
+        if ϵ === nothing; ϵ = 1e-3; end
+        A = [3-ϵ 1; 4 2-ϵ]
+        B = [1; 1]
+        Q = [4ϵ - 11   2ϵ - 5; 2ϵ - 5 2ϵ - 2]
+        R = fill(1, (1, 1))
+        X = [2 1; 1 1]
+        return A, B, Q, R, nothing, X
+    elseif id == "4.1"
+        if n == -1; n = 20; end
+        r = 0.001
+        A = diagm(1 => ones(n-1))
+        B = [zeros(n-1, 1); 1]
+        Q = Matrix(I, n, n)
+        R = fill(r, 1, 1)
+        return A, B, Q, R, nothing, nothing
     else
-        error("Unknown test case")        
+        error("Unknown test case")
     end
 end
 
-
-
-
-
-
-function darex(id)
-    if id == 1
+function darex(id; δ=nothing, n=-1)
+    if id == "1.2"
         A = [0  1; 0 -1]
         B = [1 0; 2 1]
         Q = 1/11*[-4 -4; -4 7]
         R = [9 3; 3 1]
         S = [3 1; -1 7]
         return A, B, Q, R, S, nothing
-    elseif id == 2
+    elseif id == "1.3"
         A = [0  0; 0 1]
         B = [0; 1][:,:]
         Q = [1 2; 2 4]
         R = fill(1, 1, 1)
-        return A, B, Q, R, nothing, nothing
-    elseif id == 3
+        Xtrue = [1 2; 2 2 + 2+sqrt(5)]
+        return A, B, Q, R, nothing, Xtrue
+    elseif id == "1.4"
         A = [0  0.1 0; 0 0 0.1; 0 0 0]
         B = [1 0; 0 0; 0 1]
         Q = diagm([1e5, 1e3, -10])
         R = diagm([0, 1])
         return A, B, Q, R, nothing, nothing
-    elseif id == 4
+    elseif id == "1.5"
         A = [0.998   0.067   0     0
              -0.067  0.098   0     0
                 0      0   0.998  0.153
@@ -140,14 +130,7 @@ function darex(id)
              -0.244  0      0      1.048]
         R = diagm([1, 1])
         return A, B, Q, R, nothing, nothing
-    elseif id == 5
-        A = [4 3; -9/2 -7/2]
-        B = [1; -1][:,:]
-        Q = [9 6; 6 4]
-        δ = 1e-15
-        R = fill(δ, 1, 1)
-        return A, B, Q, R, nothing, nothing
-    elseif id == 44
+    elseif id == "1.6"
         A = 1e-3 * [
             984.75 -79.903 0.9054 -1.0765
             41.588  998.99 -35.855 12.684
@@ -161,17 +144,24 @@ function darex(id)
         R = Matrix(I, 2, 2)
         Q = 0.01*Matrix(I, 4, 4)
         return A, B, Q, R, nothing, nothing
-    elseif id == 6 # CAREX 4.1, Hmm, this is essentially a time-delay, not integrators
-        n = 50
+    elseif id == "2.1" # Stabilizable-detectable but uncontrollable-unobservable
+        if isnothing(δ); δ = 1; end
+        A = [4 3; -9/2 -7/2]
+        B = [1; -1][:,:]
+        Q = [9 6; 6 4]
+        R = fill(δ, 1, 1)
+        return A, B, Q, R, nothing, nothing
+    elseif id == "4.1" # Hmm, this is essentially a time-delay, not integrators
+        if n == -1; n = 20; end
         r = 0.001
         A = diagm(1 => ones(n-1))
         B = [zeros(n-1, 1); 1]
         Q = Matrix(I, n, n)
         R = fill(r, 1, 1)
         return A, B, Q, R, nothing, nothing
-    elseif id == 8
+    elseif id == "x1" # A first-order system + delay
         A, B, C, D = ControlSystems.ssdata(c2d(DemoSystems.fotd(), 0.1))
-        R = fill(1e-7, (1, 1))
+        R = 0
         Q = C'*C
         S = nothing
         return A, B, Q, R, nothing, nothing

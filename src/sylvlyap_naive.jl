@@ -1,5 +1,5 @@
-# Methods for the naive method where the solution is simply vectorized
-# This is necessary for matrices with element types that don't allow a Schur factorization,
+# Naive methods for Sylvester/Lyapunoc equations where the equation is simply vectorized
+# This is necessary for matrices with element types that don't allow Schur factorization,
 # e.g., symbolic types
 
 function sylvc(A, B, C, ::Val{:naive})

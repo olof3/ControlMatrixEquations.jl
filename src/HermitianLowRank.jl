@@ -4,14 +4,22 @@
 
 Represents a symmetric positive semideifnite matrix of the form
 
-P = factor * factor'
+P = factor1 * factor2'
 
 """
-struct MatrixLowRank{T <: Number, MT <: AbstractMatrix{T}} <: AbstractMatrix{T}
+struct MatrixLowRank{T <: Number, MT <: AbstractVecOrMat{T}} <: AbstractMatrix{T}
     factor1::MT
     factor2::MT
-end
 
+    function MatrixLowRank{T,MT}(factor1, factor2) where {T,MT}
+        size(factor1)[1] != size(factor2)[1] &&  error("Incompatible dimensions of factor1 and factor2")
+        new{T,MT}(factor1, factor2)
+    end
+end
+function MatrixLowRank(factor1::AbstractVecOrMat, factor2::AbstractVecOrMat)
+    MT = promote_type(typeof(factor1), typeof(factor2))
+    MatrixLowRank{eltype(MT),MT}(MT(factor1), MT(factor2))
+end
 
 """
     HermitianLowRank{T, MT}

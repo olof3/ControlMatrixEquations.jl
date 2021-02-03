@@ -3,12 +3,15 @@ using Test, LinearAlgebra, Random
 
 
 include("framework.jl")
+include("riccati_benchmarks.jl")
 
 my_tests = [
             "test_utilities",
             "test_sylvlyap_schur",
             "test_sylvlyap_naive",
             "test_sylvlyap",
+            "test_arec",
+            "test_ared"
             ]
 
 
@@ -19,6 +22,6 @@ lyapc_rhs = (A, X) -> -Matrix(Hermitian(A*X + X*A'))
 lyapd_rhs = (A, X) -> -Matrix(Hermitian(A*X*A' - X))
 
 for test in my_tests
-    println("In $test.jl:")
+    #println("In $test.jl:")
     include("$(test).jl")
 end

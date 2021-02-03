@@ -3,7 +3,7 @@
     arec(A, B, Q, R, S=nothing; force_esp=false)
 
 Find the stabilizing solution `X` to the continuous-time Riccati equation
-`A'X + XA - (XB + S)/R(XB + S)' + Q`
+`A'X + XA - (XB + S)/R(XB + S)' + Q = 0`
 """
 function arec(A::AbstractNumOrArray, B::AbstractNumOrArray, Q::Union{AbstractNumOrArray,UniformScaling}, R::Union{AbstractNumOrArray,UniformScaling}, S=nothing; force_esp=false)
     A, B, Q, R, S = _check_ARE_inputs(A, B, Q, R, S)
@@ -12,7 +12,7 @@ function arec(A::AbstractNumOrArray, B::AbstractNumOrArray, Q::Union{AbstractNum
         if S == nothing
             return arec_noinv(A, B/R*B', Q)
         else
-            return arec_noinv(A - B/R*S', B/R*B', Hermitian(Q - S/R*S'))
+            return arec_noinv(A - B/R*S', B/R*B', Q - Hermitian(S/R*S'))
         end
     else
         return _are_extended_pencil(Val(:c), I, A, B, Q, R, S)
@@ -23,9 +23,9 @@ end
     ared(A, B, Q, R, S=nothing; force_esp=false)
 
 Find the stabilizing solution `X` to the discrete-time Riccati equation
-`A'XA - X - (A'XB + S)/(B'XB + R)(A'XB + S)' + Q`
+`A'XA - X - (A'XB + S)/(B'XB + R)(A'XB + S)' + Q = 0`
 """
-function ared(A::AbstractNumOrArray, B::AbstractNumOrArray, Q::AbstractNumOrArray, R::AbstractNumOrArray, S=nothing; force_esp=false)
+function ared(A::AbstractNumOrArray, B::AbstractNumOrArray, Q::Union{AbstractNumOrArray,UniformScaling}, R::Union{AbstractNumOrArray,UniformScaling}, S=nothing; force_esp=false)
     A, B, Q, R, S = _check_ARE_inputs(A, B, Q, R, S)
 
     if cond(R) <= 1e4 && !force_esp
@@ -70,25 +70,25 @@ end
 function _ared(A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}; stable_solution::Bool=true) where {T <: Number}
     n, m = size(B)
 
-    L = [Matrix{T}(I, n, n) B*(R\B');
+    M = [Matrix{T}(I, n, n) B*(R\B');
          zeros(n,n) A']
-    M = [A zeros(n,n);
+    L = [A zeros(n,n);
          -Q Matrix{T}(I, n, n)]
 
-    return _sovle_ARE_pencil(L, M, Val(:d), stable_solution)
+    return _sovle_ARE_pencil(L, M, Val(:d), stable_solution=stable_solution)
 end
 
 """
     arec_noinv(A, G, Q)
 
 Find the solution `X` to the Riccati equation
-A'X + XA - XGX + Q = 0
+`A'X + XA - XGX + Q = 0`
 """
 function arec_noinv(A::Matrix{T}, G::Matrix{T}, Q::Matrix{T}) where {T <: Number}
-    L = [A  -G;
+    M = [A  -G;
         -Q  -A']
 
-    return _sovle_ARE_pencil(L, I, Val(:c))
+    return _sovle_ARE_pencil(M, I, Val(:c))
 end
 
 
@@ -118,7 +118,7 @@ end
 function _are_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}, S=nothing; balance=true) where {T <: Number}
     n, m = size(B)
 
-    (isnothing(E) || E == I) && (E = I(n))
+    (isnothing(E) || E == I) && (E = Matrix{T}(I, n, n))
     isnothing(S) && (S = zeros(n, m))
 
     if timetype === Val(:c)
@@ -130,13 +130,13 @@ function _are_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T},
             -Q  -A' -S
             S'   B' R]
     else
-        H = [A zeros(n,n)
-        -Q E'
-        S' zeros(m,n)]
+        H = [A zeros(n,n) B
+        -Q E' -S
+        S' zeros(m,n) R]
 
-        J = [E zeros(n,n)
-        zeros(n,n) A'
-        zeros(m,n) -B']
+        J = [E zeros(n,n) zeros(n,m)
+        zeros(n,n) A' zeros(n,m)
+        zeros(m,n) -B' zeros(m,m)]
     end
 
     if balance
@@ -148,10 +148,10 @@ function _are_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T},
     F_compress = qr(Matrix(H[:,2n+1:end]))
     P_compress = [zeros(2n, m) Matrix(I, 2n, 2n)] * F_compress.Q'
 
-    L = P_compress * H[:, 1:2n]
-    M = P_compress * J[:, 1:2n]
+    M = P_compress * H[:, 1:2n]
+    L = P_compress * J[:, 1:2n]
 
-    X, cl_eigvals = _sovle_ARE_pencil(L, M, timetype, stable_solution=true)
+    X, cl_eigvals = _sovle_ARE_pencil(M, L, timetype, stable_solution=true)
 
     if balance # X -> D*X*D
         ldiv!(D, X)
@@ -164,10 +164,10 @@ end
 
 # Find the c/d - stabilizing/antistabilizing subspace to a Riccati matrix pencil
 # `L - λM`
-function _sovle_ARE_pencil(L, M, timetype::Union{Val{:c},Val{:d}}; stable_solution::Bool=true)
-    n = Int(size(L,1) / 2)
+function _sovle_ARE_pencil(M, L, timetype::Union{Val{:c},Val{:d}}; stable_solution::Bool=true)
+    n = Int(size(M,1) / 2)
 
-    schurfact = (M == I) ? schur(L) : schur(L, M)
+    schurfact = (L == I) ? schur(M) : schur(M, L)
 
     # Find the basis vectors corresponding to the chosen subspace (c-stable/antistable, d-stable/antistable)
     # and reorder the Schur/QZ factorization so that these come first

@@ -33,7 +33,10 @@ end
 
 end
 
-
+# Test some different matrix types
+Q = Symmetric([1 2 3; 1 4 5; 3 5 6])
+@test lyapc(I, Q) ≈ -Q/2
+@test lyapd(0.5I, Q) ≈ (4/3)Q
 
 @testset "errors" begin
 

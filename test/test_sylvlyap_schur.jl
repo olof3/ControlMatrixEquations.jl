@@ -5,6 +5,9 @@ A3 = [2 0 0; 3 4 0; 5 6 7]
 B3 = [2 3 4; 0 1 1; 0 0 2]
 X3 = reshape(1:9, 3, 3)
 
+
+@testset "sylv(c/d)_schur! and lyap(c/d)_schur! various type combinations" begin
+
 for (A, B, X, tsname) in [(fill(2.0, 1, 1), fill(3.0, 1, 1), fill(1.0, 1, 1), "1x1"),
                   (diagm([2.0,3]), diagm([4.0,5]), [1.0 2; 3 4], "2x2 diagonal"),
                   ([-2 0; 2 3], [3.0 4; 0 5], [1.0 2; 3 4], "2x2 tringular"),
@@ -50,4 +53,7 @@ for (A, B, X, tsname) in [(fill(2.0, 1, 1), fill(3.0, 1, 1), fill(1.0, 1, 1), "1
             @test ControlMatrixEquations.lyapd_schur!(Ac, lyapd_rhs(Ac, Xch)) ≈ Xch
         end
     end
+end
+
+
 end
