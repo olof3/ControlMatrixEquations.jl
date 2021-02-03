@@ -7,11 +7,8 @@ export sylvc, sylvd
 export lyapc, lyapd
 export arec, ared
 
-export HermitianLowRank
-
 const AbstractNumOrArray = Union{Number, AbstractVecOrMat}
 
-include("HermitianLowRank.jl")
 include("utilities.jl")
 
 include("sylv_2x2.jl")
