@@ -6,13 +6,16 @@ Solvers for Sylvester, Lyapunov and Riccati Equations
 
 ### Linear matrix equations
 `sylvc(A, B, C)` solves `AX + BX = C`  
-`sylvd(A, B, C)` solves `AXB - X = C`  
-`lyapc(A, Q)` solves `AX + BA' = -Q`  
+`sylvd(A, B, C)` solves `AXB - X = C`
+`sylvg(A, B, C)` solves `AXB - X = C`
+`lyapc(A, Q)` solves `AX + XA' = -Q`  
 `lyapd(A, Q)` solves `AXA' - X = -Q`  
 
 The packages provides direct solvers based on straight-forward implementations of [Bartels-Stewart's algorithm](https://en.wikipedia.org/wiki/Bartels%E2%80%93Stewart_algorithm).
 If there is no method `schur` for the `A` or the `B` matrix, there is a fallback to the "naive" method, this is useful for, e.g., symbolic equations.
 
 ### Riccati equations
-`arec(A, B, Q, R, S)` solves the equation `A'X + XA - (XB + S)/R(XB + S)' + Q = 0`
+`arec(A, B, Q, R, S)` solves the equation `A'X + XA - (XB + S)/R(XB + S)' + Q = 0` 
 `ared(A, B, Q, R, S)` solves the equation `A'XA - X - (A'XB + S)/(B'XB + R)(A'XB + S)' + Q = 0`
+
+Uses standard Schur-factorization based Riccati solvers, including extended pencil versions that handles (near) singular `R` matrices.

@@ -1,58 +1,85 @@
-# (A, B/R*B) must be stabilizable
 """
     arec(A, B, Q, R, S=nothing; force_esp=false)
 
 Find the stabilizing solution `X` to the continuous-time Riccati equation
 `A'X + XA - (XB + S)/R(XB + S)' + Q = 0`
-"""
-function arec(A::AbstractNumOrArray, B::AbstractNumOrArray, Q::Union{AbstractNumOrArray,UniformScaling}, R::Union{AbstractNumOrArray,UniformScaling}, S=nothing; force_esp=false)
-    A, B, Q, R, S = _check_ARE_inputs(A, B, Q, R, S)
 
-    if cond(R) <= 1e4 && !force_esp# FIXME: Think this condition through
+Arnold, W. F., & Laub, A. J. (1984). Generalized eigenproblem algorithms and software
+for algebraic Riccati equations. Proceedings of the IEEE, 72(12), 1746-1754.
+
+Bini, D. A., Iannazzo, B., & Meini, B. (2011). Numerical solution of algebraic Riccati equations.
+"""
+function arec(A::AbstractNumOrArray, B::AbstractNumOrArray, Q::Union{AbstractNumOrArray,UniformScaling}, R::Union{AbstractNumOrArray,UniformScaling}, S=nothing; force_extended_pencil=false, stabsol::Bool=true)
+    _, A, B, Q, R, S = _check_ARE_inputs(I, A, B, Q, R, S)
+
+    if cond(R) <= 1e4 && !force_extended_pencil # FIXME: What condition to use?
         if S == nothing
-            return arec_noinv(A, B/R*B', Q)
+            return arec_noinv(A, B/R*B', Q, stabsol=stabsol)
         else
-            return arec_noinv(A - B/R*S', B/R*B', Q - Hermitian(S/R*S'))
+            return arec_noinv(A - B/R*S', B/R*B', Q - Hermitian(S/R*S'), stabsol=stabsol)
         end
     else
-        return _are_extended_pencil(Val(:c), I, A, B, Q, R, S)
+        return _ARE_extended_pencil(Val(:c), I, A, B, Q, R, S, stabsol=stabsol)
     end
 end
+
+"""
+arecg(A, B, Q, R, S=nothing; force_esp=false)
+
+Find the stabilizing solution `X` to the continuous-time generalized Riccati equation
+`A'XE + E'XA - (E'XB + S)/R(E'XB + S)' + Q = 0`
+"""
+function arecg(E, A, B, Q, R, S=nothing)
+    E, A, B, Q, R, S = _check_ARE_inputs(E, A, B, Q, R, S)
+    _ARE_extended_pencil(Val(:c), E, A, B, Q, R, S, stabsol=true)
+end
+
 
 """
     ared(A, B, Q, R, S=nothing; force_esp=false)
 
 Find the stabilizing solution `X` to the discrete-time Riccati equation
 `A'XA - X - (A'XB + S)/(B'XB + R)(A'XB + S)' + Q = 0`
-"""
-function ared(A::AbstractNumOrArray, B::AbstractNumOrArray, Q::Union{AbstractNumOrArray,UniformScaling}, R::Union{AbstractNumOrArray,UniformScaling}, S=nothing; force_esp=false)
-    A, B, Q, R, S = _check_ARE_inputs(A, B, Q, R, S)
 
-    if cond(R) <= 1e4 && !force_esp
+Arnold, W. F., & Laub, A. J. (1984). Generalized eigenproblem algorithms and software
+for algebraic Riccati equations. Proceedings of the IEEE, 72(12), 1746-1754.
+
+Bini, D. A., Iannazzo, B., & Meini, B. (2011). Numerical solution of algebraic Riccati equations.
+"""
+function ared(A::AbstractNumOrArray, B::AbstractNumOrArray, Q::Union{AbstractNumOrArray,UniformScaling}, R::Union{AbstractNumOrArray,UniformScaling}, S=nothing; force_extended_pencil=false, stabsol::Bool=true)
+    _, A, B, Q, R, S = _check_ARE_inputs(I, A, B, Q, R, S)
+
+    if cond(R) <= 1e4 && !force_extended_pencil
         if S == nothing
-            return _ared(A, B, Q, R)
+            return _ared(A, B, Q, R, stabsol=stabsol)
         else
-            return _ared(A - B/R*S', B, Q - S/R*S', R)
+            return _ared(A - B/R*S', B, Q - S/R*S', R, stabsol=stabsol)
         end
     else
-        return _are_extended_pencil(Val(:d), I, A, B, Q, R, S)
+        return _ARE_extended_pencil(Val(:d), I, A, B, Q, R, S, stabsol=stabsol)
     end
 end
 
 
-function _check_ARE_inputs(A, B, Q, R, S)
+function _check_ARE_inputs(E, A, B, Q, R, S)
     # Convert all inputs to Matrix{T}
-    T = float(promote_type(eltype(A), eltype(B), eltype(Q), isnothing(S) ? Union{} : eltype(S)))
+    T = float(promote_type(eltype(E), eltype(A), eltype(B), eltype(Q), isnothing(S) ? Union{} : eltype(S)))
+
+
+    # Convert Q and R to Matrix
 
     A, B = to_matrix(T, A), to_matrix(T, B)
     n, m = size(B)
-    Q = Q isa UniformScaling ? Matrix{T}(Q,n,n) : to_matrix(T, Q)
-    R = R isa UniformScaling ? Matrix{T}(R,m,m) : to_matrix(T, R) # There would be small improvements for cases where this conversion could be avoided
+    Q = (Q isa UniformScaling) ? Matrix{T}(Q,n,n) : to_matrix(T, Q)
+    R = (R isa UniformScaling) ? Matrix{T}(R,m,m) : to_matrix(T, R) # There would be small improvements for cases where this conversion could be avoided
+    if !(E isa UniformScaling); E = to_matrix(T, Q); end
+
     S = to_matrix(T, S)
 
 
     # Check matrix sizes and structure of R and Q
     size(A) != (n, n) && error("A and B have mismatched sizes $(size(A)) vs $(size(B))")
+    !(E isa UniformScaling) && size(E) != (n, n) && error("A and E have mismatched sizes $(size(A)) vs $(size(E))")
     size(Q) != (n, n) && error("A and Q have mismatched sizes $(size(A)) vs $(size(Q))")
     size(R) != (m, m) && error("B and R have mismatched sizes $(size(B)) vs $(size(R))")
     !isnothing(S) && size(S) != (n,m) && error("A and S have mismatched sizes $(size(A)) vs $(size(S))")
@@ -61,13 +88,13 @@ function _check_ARE_inputs(A, B, Q, R, S)
     !ishermitian(R) && error("R must be Hermitian")
 
     # return all inputs converted to matrices
-    return A, B, Q, R, S
+    return E, A, B, Q, R, S
 end
 #_check_ARE_inputs(A, B, Q, R) = _check_ARE_inputs(A, B, Q, R, nothing)
 
 # Solve the dicrete-time Riccati (with S=0) by setting
-# up the basic matrix pencil
-function _ared(A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}; stable_solution::Bool=true) where {T <: Number}
+# up the standard matrix pencil
+function _ared(A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}; stabsol::Bool=true) where {T <: Number}
     n, m = size(B)
 
     M = [Matrix{T}(I, n, n) B*(R\B');
@@ -75,7 +102,7 @@ function _ared(A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}; stable_so
     L = [A zeros(n,n);
          -Q Matrix{T}(I, n, n)]
 
-    return _sovle_ARE_pencil(L, M, Val(:d), stable_solution=stable_solution)
+    return _sovle_ARE_pencil(L, M, Val(:d), stabsol=stabsol)
 end
 
 """
@@ -84,23 +111,23 @@ end
 Find the solution `X` to the Riccati equation
 `A'X + XA - XGX + Q = 0`
 """
-function arec_noinv(A::Matrix{T}, G::Matrix{T}, Q::Matrix{T}) where {T <: Number}
+function arec_noinv(A::Matrix{T}, G::Matrix{T}, Q::Matrix{T}; stabsol=true) where {T <: Number}
     M = [A  -G;
         -Q  -A']
 
-    return _sovle_ARE_pencil(M, I, Val(:c))
+    return _sovle_ARE_pencil(M, I, Val(:c), stabsol=stabsol)
 end
 
 
 # This is a the same balancing used in scipy.linalg,
 # but modified (hopefully correctly) for better readability
-function _balance_extended_pencil!(H::Matrix, J::Matrix, n::Int, m::Int)
+function _balance_extended_pencil!(H::Matrix{T}, J::Matrix{T}, n::Int, m::Int) where {T <: Number}
     W = abs.(H) + abs.(J)
     for k=1:size(H,1); W[k,k] = 0; end # Put diagonal entries to zero
 
-    _, _, scaling0 = LAPACK.gebal!('S', W) # Only need the scaling vector
+    _, _, scaling0 = LAPACK.gebal!('S', W) # Only need the vector of scaling factors
 
-    # Make  scaling maintains symplectic structure and are powers of 2
+    # Make sure the scaling factors maintain the symplectic structure and are powers of 2
     scaling0_log2 = [frexp.(el)[2] for el in scaling0]
     s = (scaling0_log2[1:n] - scaling0_log2[n+1:2n]) .>> 1 # Div 2
     scaling_pow2rounded = [exp2.(s); exp2.(-s); ones(eltype(s), m)]
@@ -114,21 +141,28 @@ function _balance_extended_pencil!(H::Matrix, J::Matrix, n::Int, m::Int)
     return D
 end
 
-# This method works for poorly conditioned R matrices
-function _are_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}, S=nothing; balance=true) where {T <: Number}
+
+
+# The extended pencil method can handle poorly conditioned R matrices
+function _ARE_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}, S=nothing; balance=true, stabsol=stabsol) where {T <: Number}
     n, m = size(B)
 
     (isnothing(E) || E == I) && (E = Matrix{T}(I, n, n))
     isnothing(S) && (S = zeros(n, m))
 
     if timetype === Val(:c)
-        J = zeros(2n+m, 2n+m)
+        J = zeros(T, (2n+m, 2n+m))
         J[1:n, 1:n] .= E
-        J[n+1:2n, n+1:2n] .= E
+        J[n+1:2n, n+1:2n] .= E'
 
-        H = [A zeros(n,n) B
+        H = [A zeros(T, (n,n)) B
             -Q  -A' -S
             S'   B' R]
+
+        # blockmat((n,n,m), (n,n,m),
+        #          (0, J, 0,
+        #           0, E', 0,
+        #           0, 0, 0)
     else
         H = [A zeros(n,n) B
         -Q E' -S
@@ -151,7 +185,7 @@ function _are_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T},
     M = P_compress * H[:, 1:2n]
     L = P_compress * J[:, 1:2n]
 
-    X, cl_eigvals = _sovle_ARE_pencil(M, L, timetype, stable_solution=true)
+    X, cl_eigvals = _sovle_ARE_pencil(M, L, timetype, stabsol=true)
 
     if balance # X -> D*X*D
         ldiv!(D, X)
@@ -162,21 +196,26 @@ function _are_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T},
 end
 
 
-# Find the c/d - stabilizing/antistabilizing subspace to a Riccati matrix pencil
-# `L - λM`
-function _sovle_ARE_pencil(M, L, timetype::Union{Val{:c},Val{:d}}; stable_solution::Bool=true)
+"""
+    _sovle_ARE_pencil(M, L, timetype::Union{Val{:c},Val{:d}}; stabsol::Bool=true)
+
+    Find the c/d - stabilizing/antistabilizing subspace to a Riccati matrix pencil `L - λM`
+"""
+function _sovle_ARE_pencil(M, L, timetype::Union{Val{:c},Val{:d}}; stabsol::Bool=true)
     n = Int(size(M,1) / 2)
 
     schurfact = (L == I) ? schur(M) : schur(M, L)
 
     # Find the basis vectors corresponding to the chosen subspace (c-stable/antistable, d-stable/antistable)
-    # and reorder the Schur/QZ factorization so that these come first
-    if timetype === Val(:c) && stable_solution
-        select = real(schurfact.values) .< 0 # Cirrect? Best for readability to loo at the eigenvalues?
-        #select = schurfact.β .> 0
-    elseif timetype === Val(:d) && stable_solution
+    # so that the Schur/QZ factorization can be reordered to have these first
+    if timetype === Val(:c) && stabsol
+        select = real(schurfact.values) .< 0 # Correct? Best for readability to look at the eigenvalues rather than α and β?
+    elseif timetype === Val(:c) && !stabsol
+        select = real(schurfact.values) .> 0
+    elseif timetype === Val(:d) && stabsol
         select = abs2.(schurfact.values) .< 1
-        #select = abs2.(schurfact.α) .< abs2.(schurfact.β)
+    elseif timetype === Val(:d) && !stabsol
+        select = abs2.(schurfact.values) .> 1
     else
         error("Unknown/unsupported subspace to select when solving ARE pencil")
     end

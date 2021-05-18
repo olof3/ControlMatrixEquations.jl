@@ -6,6 +6,7 @@ using StaticArrays
 export sylvc, sylvd
 export lyapc, lyapd
 export arec, ared
+export arecg, aredg
 
 const AbstractNumOrArray = Union{Number, AbstractVecOrMat}
 
@@ -43,6 +44,9 @@ sylvd(A, B, C, ::Val{:infer}; kwargs...) = sylvd(A, B, C, _infer_sylvalg(A,B,C);
 lyapc(A, Q, ::Val{:infer}; kwargs...) = lyapc(A, Q, _infer_sylvalg(A,A,Q); kwargs...)
 lyapd(A, Q, ::Val{:infer}; kwargs...) = lyapd(A, Q, _infer_sylvalg(A,A,Q); kwargs...)
 
+
+lyapc(a::Number, q::Number) = sylvc(a, a', -q)
+lyapd(a::Number, q::Number) = sylvd(a, a', -q)
 
 # The following should preferably be fixed in LinearAlgebra, there is an issue posted...
 LinearAlgebra.schur(A::LinearAlgebra.AdjOrTrans{T}) where T = schur!(LinearAlgebra.copy_oftype(A, LinearAlgebra.eigtype(T)))
