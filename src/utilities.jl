@@ -62,17 +62,24 @@ end
 # FIXME: better handling of uniform scaling?!
 issquare(A::Number) = true
 issquare(A::AbstractMatrix) = size(A,1) == size(A,2)
-function _check_lyap_inputs(A, Q)
+function _check_lyap_inputs(A, Q, E=nothing)
     if !issquare(A); error("The A matrix must be square"); end
     if !ishermitian(Q); error("The Q matrix must be Hermitian"); end
     if size(Q, 1) != size(A, 1); error("The A and Q matrices must have the same dimensions"); end
+
+    if E === nothing; return; end
+    if size(A) != size(E); error("A and E matrices must have the same size"); end
 end
 
-function _check_sylv_inputs(A, B, C)
+function _check_sylv_inputs(A, B, C, E=nothing, F=nothing)
     if !issquare(A); error("The A matrix must be square"); end
     if !issquare(B); error("The B matrix must be square"); end
     if size(C, 1) != size(A, 1); error("The A and C matrices have inconsistent dimensions"); end
     if size(C, 2) != size(B, 2); error("The B and C matrices have inconsistent dimensions"); end
+
+    if E === nothing; return; end
+    if size(A) != size(E); error("A and E matrices must have the same size"); end
+    if size(B) != size(F); error("B and F matrices must have the same size"); end
 end
 
 

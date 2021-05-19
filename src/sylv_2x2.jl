@@ -17,7 +17,7 @@ end
 @inline function sylvg(a::Number, b::Number, c::Number, e::Number, f::Number)
     x = c / (a*b + e*f)
 
-    if !isfinite(x); error("Matrix equation has no solution, see ?sylvc or ?lyapc"); end
+    if !isfinite(x); error("Matrix equation has no solution, see ?sylvg / ?lyapcg / ?lyapdg"); end
 
     x
 end
@@ -92,6 +92,46 @@ function _sylvd!(A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix, ::Val{
     Xv = (kron(transpose(Bs), As) - SMatrix{M*N,M*N}(I)) \ Cvs # using the vectorization identity vec(AXB) = kron(B'*A)*vec(X)
 
     if any(!isfinite, Xv); error("Matrix equation has no solution, see ?sylvd or ?lyapd"); end
+
+    C .= reshape(Xv, M, N)
+end
+
+
+
+"""
+    _sylvd!(A, B, C, E, F) -> X
+
+Find the solution `X` to the discrete-time Sylvester equation
+
+`AXB + EXF = C`
+
+for small matrices (1x1, 1x2, 2x1, 2x2), overwriting the input `C`.
+"""
+function _sylvg!(A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix, E::AbstractMatrix, F::AbstractMatrix)
+    M, N = size(C)
+    if M == 2 && N == 2
+        _sylvg!(A, B, C, E, F, Val(2), Val(2))
+    elseif M == 2 && N == 1
+        _sylvg!(A, B, C, E, F, Val(2), Val(1))
+    elseif M == 1 && N == 2
+        _sylvg!(A, B, C, E, F, Val(1), Val(2))
+    elseif M == 1 && N == 1
+        _sylvg!(A, B, C, E, F, Val(1), Val(1))
+    else
+        error("Matrix dimensionsins should not be greater than 2")
+    end
+    return C
+end
+function _sylvg!(A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix, E::AbstractMatrix, F::AbstractMatrix, ::Val{M}, ::Val{N}) where {T <: Number, M, N}
+    As = SMatrix{M,M}(A)
+    Bs = SMatrix{N,N}(B)
+    Es = SMatrix{M,M}(E)
+    Fs = SMatrix{N,N}(F)
+    Cvs = SMatrix{M,N}(C)[:] # vectorization of C
+
+    Xv = (kron(transpose(Bs), As) + kron(transpose(Fs), Es)) \ Cvs # using the vectorization identity vec(AXB) = kron(B'*A)*vec(X)
+
+    if any(!isfinite, Xv); error("Matrix equation has no solution, see ?sylvg / ?lyapcg / ?lyapdg"); end
 
     C .= reshape(Xv, M, N)
 end
