@@ -29,9 +29,15 @@ end
 Find the stabilizing solution `X` to the continuous-time generalized Riccati equation
 `A'XE + E'XA - (E'XB + S)/R(E'XB + S)' + Q = 0`
 """
-function arecg(E, A, B, Q, R, S=nothing)
+function arecg(E, A, B, Q, R, S=nothing; balance=false, stabsol=true)
     E, A, B, Q, R, S = _check_ARE_inputs(E, A, B, Q, R, S)
-    _ARE_extended_pencil(Val(:c), E, A, B, Q, R, S, stabsol=true)
+    _ARE_extended_pencil(Val(:c), E, A, B, Q, R, S, stabsol=stabsol, balance=balance)
+end
+
+
+function aredg(E, A, B, Q, R, S=nothing; balance=false, stabsol=true)
+    E, A, B, Q, R, S = _check_ARE_inputs(E, A, B, Q, R, S)
+    _ARE_extended_pencil(Val(:d), E, A, B, Q, R, S, stabsol=stabsol, balance=balance)
 end
 
 
@@ -76,14 +82,14 @@ function _check_ARE_inputs(E, A, B, Q, R, S)
     Q = (Q isa UniformScaling) ? Matrix{T}(Q,n,n) : to_matrix(T, Q)
     R = (R isa UniformScaling) ? Matrix{T}(R,m,m) : to_matrix(T, R) # There would be small improvements for cases where this conversion could be avoided
     !isnothing(S) && (S = to_matrix(T, S))
-    if !(E isa UniformScaling); E = to_matrix(T, Q); end
-    
+    if !(E isa UniformScaling); E = to_matrix(T, E); end
+
     # Check matrix sizes
     size(A) != (n, n) && error("A and B have mismatched sizes $(size(A)) vs $(size(B))")
     !(E isa UniformScaling) && size(E) != (n, n) && error("A and E have mismatched sizes $(size(A)) vs $(size(E))")
     size(Q) != (n, n) && error("A and Q have mismatched sizes $(size(A)) vs $(size(Q))")
     size(R) != (m, m) && error("B and R have mismatched sizes $(size(B)) vs $(size(R))")
-    !isnothing(S) && size(S) != (n,m) && error("A and S have mismatched sizes $(size(A)) vs $(size(S))")
+    !isnothing(S) && size(S) != (n,m) && error("B and S have mismatched sizes $(size(B)) vs $(size(S))")
 
     # Check structure of R and Q
     !ishermitian(Q) && error("Q must be Hermitian")
@@ -170,9 +176,11 @@ function _ARE_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T},
         zeros(m,n) -B' zeros(m,m)]
     end
 
+
     if balance
         D = _balance_extended_pencil!(H, J, n, m)
     end
+
 
     # Compute P_compress that keeps everything except
     # the deflating subspace correpsonding to eigenvalues at infinity
@@ -182,7 +190,7 @@ function _ARE_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T},
     M = P_compress * H[:, 1:2n]
     L = P_compress * J[:, 1:2n]
 
-    X, cl_eigvals = _sovle_ARE_pencil(M, L, timetype, stabsol=true)
+    X, cl_eigvals = _sovle_ARE_pencil(M, L, timetype, E, stabsol=true)
 
     if balance # X -> D*X*D
         ldiv!(D, X)
@@ -221,11 +229,18 @@ function _sovle_ARE_pencil(M, L, timetype::Union{Val{:c},Val{:d}}, E = I; stabso
     count(select) != n && error("Unequal numbers of stable and anti-stable eigenvalues of ARE pencil")
     ordschur!(schurfact, select)
 
-    X = if E === I
-        schurfact.Z[n+1:end, 1:n] / schurfact.Z[1:n, 1:n]
+    if E === I
+        Z11 = schurfact.Z[1:n, 1:n]
+        Z21 = schurfact.Z[n+1:end, 1:n]
     else
-        schurfact.Z[n+1:end, 1:n] / (E * schurfact.Z[1:n, 1:n])
+        Z0 = [E * schurfact.Z[1:n, 1:n];
+             schurfact.Z[n+1:end, 1:n]]
+        Z = qr(Z0).Q * [Matrix(I, n, n); zeros(n, n)]
+        Z11 = Z[1:n, :]
+        Z21 = Z[n+1:2n, :]
     end
+
+    X = Z21 / Z11
 
     return (X + X')/2, schurfact.values[1:n]
 end

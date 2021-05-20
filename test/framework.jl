@@ -16,3 +16,5 @@ arecg_residual(X, E, A, B, Q, R, S::Nothing=nothing) = arecg_residual(X, E, A, B
 
 ared_residual(X, A, B, Q, R, S) = A'*X*A - X - (A'*X*B[:,:] + S[:,:])/(B'*X*B + R)*(A'*X*B[:,:] + S[:,:])' + Q
 ared_residual(X, A, B, Q, R, S::Nothing=nothing) = ared_residual(X, A, B, Q, R, zeros(size(B)))
+aredg_residual(X, E, A, B, Q, R, S) = A'*X*A - E'*X*E - (A'*X*B[:,:] + S[:,:])/(B'*X*B + R)*(A'*X*B[:,:] + S[:,:])' + Q
+aredg_residual(X, E, A, B, Q, R, S::Nothing=nothing) = aredg_residual(X, E, A, B, Q, R, zeros(size(B)))
