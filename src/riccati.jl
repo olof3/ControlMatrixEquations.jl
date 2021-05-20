@@ -24,7 +24,7 @@ function arec(A::AbstractNumOrArray, B::AbstractNumOrArray, Q::Union{AbstractNum
 end
 
 """
-arecg(A, B, Q, R, S=nothing; force_esp=false)
+    arecg(E, A, B, Q, R, S=nothing; force_esp=false) -> X
 
 Find the stabilizing solution `X` to the continuous-time generalized Riccati equation
 `A'XE + E'XA - (E'XB + S)/R(E'XB + S)' + Q = 0`
@@ -36,7 +36,7 @@ end
 
 
 """
-    ared(A, B, Q, R, S=nothing; force_esp=false)
+    ared(A, B, Q, R, S=nothing; force_esp=false) -> X
 
 Find the stabilizing solution `X` to the discrete-time Riccati equation
 `A'XA - X - (A'XB + S)/(B'XB + R)(A'XB + S)' + Q = 0`
@@ -60,30 +60,32 @@ function ared(A::AbstractNumOrArray, B::AbstractNumOrArray, Q::Union{AbstractNum
     end
 end
 
+"""
+    _check_ARE_inputs(E, A, B, Q, R, S)
 
+Check that the arguments are valid input to a Riccati equation and convert all of them
+to `Matrix{T}`. `S` may equal `nothing`
+
+"""
 function _check_ARE_inputs(E, A, B, Q, R, S)
-    # Convert all inputs to Matrix{T}
+    n, m = size(A,1), size(B,2)
     T = float(promote_type(eltype(E), eltype(A), eltype(B), eltype(Q), isnothing(S) ? Union{} : eltype(S)))
 
-
-    # Convert Q and R to Matrix
-
+    # Convert all inputs to Matrix{T}
     A, B = to_matrix(T, A), to_matrix(T, B)
-    n, m = size(B)
     Q = (Q isa UniformScaling) ? Matrix{T}(Q,n,n) : to_matrix(T, Q)
     R = (R isa UniformScaling) ? Matrix{T}(R,m,m) : to_matrix(T, R) # There would be small improvements for cases where this conversion could be avoided
+    !isnothing(S) && (S = to_matrix(T, S))
     if !(E isa UniformScaling); E = to_matrix(T, Q); end
-
-    S = to_matrix(T, S)
-
-
-    # Check matrix sizes and structure of R and Q
+    
+    # Check matrix sizes
     size(A) != (n, n) && error("A and B have mismatched sizes $(size(A)) vs $(size(B))")
     !(E isa UniformScaling) && size(E) != (n, n) && error("A and E have mismatched sizes $(size(A)) vs $(size(E))")
     size(Q) != (n, n) && error("A and Q have mismatched sizes $(size(A)) vs $(size(Q))")
     size(R) != (m, m) && error("B and R have mismatched sizes $(size(B)) vs $(size(R))")
     !isnothing(S) && size(S) != (n,m) && error("A and S have mismatched sizes $(size(A)) vs $(size(S))")
 
+    # Check structure of R and Q
     !ishermitian(Q) && error("Q must be Hermitian")
     !ishermitian(R) && error("R must be Hermitian")
 
@@ -119,7 +121,7 @@ function arec_noinv(A::Matrix{T}, G::Matrix{T}, Q::Matrix{T}; stabsol=true) wher
 end
 
 
-# This is a the same balancing used in scipy.linalg,
+# This is the same balancing used in scipy.linalg,
 # but modified (hopefully correctly) for better readability
 function _balance_extended_pencil!(H::Matrix{T}, J::Matrix{T}, n::Int, m::Int) where {T <: Number}
     W = abs.(H) + abs.(J)
@@ -151,18 +153,13 @@ function _ARE_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T},
     isnothing(S) && (S = zeros(n, m))
 
     if timetype === Val(:c)
-        J = zeros(T, (2n+m, 2n+m))
-        J[1:n, 1:n] .= E
-        J[n+1:2n, n+1:2n] .= E'
-
         H = [A zeros(T, (n,n)) B
             -Q  -A' -S
             S'   B' R]
 
-        # blockmat((n,n,m), (n,n,m),
-        #          (0, J, 0,
-        #           0, E', 0,
-        #           0, 0, 0)
+        J = zeros(T, (2n+m, 2n+m))
+        J[1:n, 1:n] .= E
+        J[n+1:2n, n+1:2n] .= E'
     else
         H = [A zeros(n,n) B
         -Q E' -S
@@ -189,7 +186,8 @@ function _ARE_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T},
 
     if balance # X -> D*X*D
         ldiv!(D, X)
-        rdiv!(X, D)
+        #rdiv!(X, D) # Method missing in LinearAlgebra
+        rmul!(X, inv(D))
     end
 
     return X, cl_eigvals
@@ -201,7 +199,7 @@ end
 
     Find the c/d - stabilizing/antistabilizing subspace to a Riccati matrix pencil `L - λM`
 """
-function _sovle_ARE_pencil(M, L, timetype::Union{Val{:c},Val{:d}}; stabsol::Bool=true)
+function _sovle_ARE_pencil(M, L, timetype::Union{Val{:c},Val{:d}}, E = I; stabsol::Bool=true)
     n = Int(size(M,1) / 2)
 
     schurfact = (L == I) ? schur(M) : schur(M, L)
@@ -223,7 +221,11 @@ function _sovle_ARE_pencil(M, L, timetype::Union{Val{:c},Val{:d}}; stabsol::Bool
     count(select) != n && error("Unequal numbers of stable and anti-stable eigenvalues of ARE pencil")
     ordschur!(schurfact, select)
 
-    X = schurfact.Z[n+1:end, 1:n] / schurfact.Z[1:n, 1:n]
+    X = if E === I
+        schurfact.Z[n+1:end, 1:n] / schurfact.Z[1:n, 1:n]
+    else
+        schurfact.Z[n+1:end, 1:n] / (E * schurfact.Z[1:n, 1:n])
+    end
 
-    return X, schurfact.values[1:n]
+    return (X + X')/2, schurfact.values[1:n]
 end

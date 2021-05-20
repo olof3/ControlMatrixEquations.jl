@@ -15,22 +15,22 @@ X = lyapc(AI, Q)
 X = lyapd(AI, Q)
 @test norm(lyapd_residual(X, AI, Q)) < 1e-12
 
-X = ControlMatrixEquations.lyapc(A, Q, EI)
+X = lyapc(A, Q, EI)
 @test norm(lyapcg_residual(X, A, Q, EI)) < 1e-12
 
-X = ControlMatrixEquations.lyapd(A, Q, EI)
+X = lyapd(A, Q, EI)
 @test norm(lyapdg_residual(X, A, Q, EI)) < 1e-12
 
-X = ControlMatrixEquations.lyapc(AI, Q, E)
+X = lyapc(AI, Q, E)
 @test norm(lyapcg_residual(X, AI, Q, E)) < 1e-12
 
-X = ControlMatrixEquations.lyapd(AI, Q, E)
+X = lyapd(AI, Q, E)
 @test norm(lyapdg_residual(X, AI, Q, E)) < 1e-12
 
-X = ControlMatrixEquations.lyapc(AI, Q, EI)
+X = lyapc(AI, Q, EI)
 @test norm(lyapcg_residual(X, AI, Q, EI)) < 1e-12
 
-X = ControlMatrixEquations.lyapd(AI, Q, EI)
+X = lyapd(AI, Q, EI)
 @test norm(lyapdg_residual(X, AI, Q, EI)) < 1e-12
 
 

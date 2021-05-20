@@ -64,11 +64,11 @@ function sylvg(A, B, C, E, F, ::Val{:bartstew})
     _check_sylv_inputs(A, B, C, E, F)
 
     At2, Et2, UA, VA = schur(A', E')
-    B2, G2, UB, VB = schur(B, F)
+    B2, F2, UB, VB = schur(B, F)
 
     C2 = VA'*C*VB
 
-    Y = _sylvg_schur!(Matrix(At2'), B2, C2, Matrix(Et2'), G2, Val(:sylv))
+    Y = _sylvg_schur!(Matrix(At2'), B2, C2, Matrix(Et2'), F2, Val(:sylv))
 
     X = mul!(Y, UA, Y*UB')
 end
@@ -79,8 +79,8 @@ end
 
 Compute the solution `X` of the continuous-time Lyapunov equation
 
-`AX + XA' + Q = 0`
-`AXE' + EXA' + Q = 0`
+    `AX + XA' + Q = 0`
+    `AXE' + EXA' + Q = 0`
 
 A solution exists unless `A` has an eigenvalue λ = ±1 or an eigenvalue pair λ₁λ₂ = 1.
 
@@ -117,8 +117,8 @@ end
 
 Compute the solution `X` to the discrete-time Lyapunov equation
 
-`AXA' - X = -Q`
-`AXA' - EXE' = -Q`
+    `AXA' - X = -Q`
+    `AXA' - EXE' = -Q`
 
 A solution exists unless `A` has an eigenvalue λ = ±1 or an eigenvalue pair λ₁λ₂ = 1.
 #FIXME: Condition for generalized equation
@@ -160,7 +160,7 @@ end
 
 Compute the solution `X` to the continuous-time Sylvester equation
 
-`AX + XB = C`
+    `AX + XB = C`
 
 where `A` is assumed to have lower Schur form (quasi-triangular, 1x1 & 2x2 blocks on the diagonal)
 `B` is assumed to have upper Schur form
@@ -202,7 +202,7 @@ function _sylvc_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Va
 end
 function _sylvc_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Val{:lyap}}, ::Val{:realschur})
 
-    _, ba, nblocksa = _schurstructure(A, Val(:L)) # A is assumed upper triangualar
+    _, ba, nblocksa = _schurstructure(A, Val(:L)) # A is assumed upper quasi triangualar
     _, bb, nblocksb = _schurstructure(B, Val(:U))
 
     @inbounds for j=1:nblocksb
@@ -234,12 +234,12 @@ end
 
 Compute the solution `X` to the discrete-time Sylvester equation
 
-`AXB - X = C`
+    `AXB - X = C`
 
 where `A` is assumed to have lower Schur form (quasi-triangular, 1x1 & 2x2 blocks on the diagonal)
 `B` is assumed to have upper Schur form
 
-If the matrix `C` has the right type, it is overwritten with the solution `X`.
+If the matrix `C` is a `Matrix` of the right type, then it is overwritten with the solution `X`.
 
 See also `sylvd`
 """
@@ -287,7 +287,7 @@ function _sylvd_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Va
     G = zeros(eltype(C), size(C)) # G keeps track of A*X for improved performance
 
     # get block dimensions, block indices, nbr of blocks
-    _, ba, nblocksa = _schurstructure(A, Val(:L)) # A is assumed upper triangualar
+    _, ba, nblocksa = _schurstructure(A, Val(:L)) # A is assumed upper quasi triangualar
     _, bb, nblocksb = _schurstructure(B, Val(:U))
 
     @inbounds for j=1:nblocksb
@@ -318,7 +318,15 @@ function _sylvd_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Va
     return C
 end
 
+"""
+    sylvg_schur!(A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix, E::AbstractMatrix, F::AbstractMatrix) -> X
 
+Compute the solution `X` to the discrete-time Sylvester equation
+
+    `AXB + EXF = C`
+
+See also `sylvc`, `sylvd`
+"""
 _sylvg_schur!(A::Matrix, B::Matrix, C::Matrix, E::Matrix, F::Matrix, alg::Union{Val{:sylv},Val{:lyap}}) =
     _sylvg_schur!(A, B, C, E, F, alg, any(isreal, (A, B, E, F)) ? Val(:realschur) : Val(:complexschur))
 
@@ -359,8 +367,8 @@ function _sylvg_schur!(A::Matrix, B::Matrix, C::Matrix, E::Matrix, F::Matrix, al
     H = zeros(eltype(C), size(A,1), size(B, 1)) # H keeps track of E*X for improved performance
 
     # get block dimensions, block indices, nbr of blocks
-    _, ba, nblocksa = _schurstructure(A, Val(:L)) # A is assumed upper triangualar
-    _, bb, nblocksb = _schurstructure(B, Val(:U))
+    _, ba, nblocksa = _schurstructure(A, E, Val(:L))
+    _, bb, nblocksb = _schurstructure(B, F, Val(:U))
 
     @inbounds for j=1:nblocksb
         i0 = (alg === Val(:lyap) ? j : 1)

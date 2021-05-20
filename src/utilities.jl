@@ -32,32 +32,40 @@ Return the block strucutre of an upper quasi-traingular Schur matrix `R`.
 `nblocks` is the number of blocks
 
 """
-function _schurstructure(R::AbstractMatrix, ul=Val(:U)::Union{Val{:U}, Val{:L}})
+_schurstructure(R::AbstractMatrix, ul::Union{Val{:U}, Val{:L}}) = _schurstructure(R, nothing, ul)
+function _schurstructure(R::AbstractMatrix, S::Union{AbstractMatrix,Nothing}, ul::Union{Val{:U}, Val{:L}})
     n = size(R,1)
 
-    d = Vector{Int}(undef, n) # block sizes
-    b = Vector{UnitRange{Int64}}(undef, n) # block indices
+    d = Vector{Int32}(undef, n) # block sizes
+    b = Vector{UnitRange{Int32}}(undef, n) # block indices
 
-    j = 1 # column if ul=:U, row if ul=:L
+    # Create function for checking if the offdiagonal element below (:U) / to the right (:L) of element (j,j) is zero
+    is_offdiag_zero =
+        if ul === Val(:U)
+            S === nothing ? j -> iszero(R[j+1, j]) : j -> iszero(R[j+1, j]) && iszero(S[j+1, j])
+        else
+            S === nothing ? j -> iszero(R[1, j+1]) : j -> iszero(R[j, j+1]) && iszero(S[j, j+1])
+        end
+
+    j = 1 # current column (if :U) or row (if :L) index
     k = 0 # block number
     while j <= n
+        j >= 2 && !is_offdiag_zero(j-1) && error("Matrix is not on Schur form")
         k += 1
         if j == n
             d[k] = 1
         else
-            if ul === Val(:U)
-                d[k] = iszero(R[j+1, j]) ? 1 : 2
-            else
-                d[k] = iszero(R[j, j+1]) ? 1 : 2
-            end
+            d[k] = is_offdiag_zero(j) ? 1 : 2
         end
         b[k] = j:j+d[k]-1
         j += d[k]
     end
     resize!(d, k)
     resize!(b, k)
+    # k now contains the total number of blocks
     return d, b, k
 end
+
 
 # FIXME: better handling of uniform scaling?!
 issquare(A::Number) = true
