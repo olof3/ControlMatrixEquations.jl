@@ -174,5 +174,7 @@ function darex(id; δ=nothing, n=-1)
         R = Symmetric(15I + randn(m, m))
         S = randn(n, m)
         return A, B, Q, R, S, nothing
+    else
+        error("Unknown test case")
     end
 end

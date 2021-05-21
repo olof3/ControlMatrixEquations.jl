@@ -28,6 +28,14 @@ end
 end # testset CAREX
 
 
+
+@testset "arecg" begin
+
+
+end
+
+
+
 ## Add tests for cases with no solution...
 
 end # testset
