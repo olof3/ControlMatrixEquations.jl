@@ -1,6 +1,9 @@
 # ControlMatrixEquations.jl
 Solvers for Sylvester, Lyapunov and Riccati Equations
 
+
+[![Build Status](https://github.com/olof3/ControlMatrixEquations.jl/workflows/CI/badge.svg)](https://github.com/olof3/ControlMatrixEquations.jl/actions?query=workflow%3ACI)
+
 [![codecov](https://codecov.io/gh/olof3/ControlMatrixEquations.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/olof3/ControlMatrixEquations.jl)
 
 Numerous conventions are used for signs, symbols and tranpsoses of the various matrix equations. The ones used for this package were decided to be sensible from a control perspective but is WIP.
