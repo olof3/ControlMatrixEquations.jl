@@ -8,10 +8,12 @@ lyapcg_residual(X, A, Q, E) = A*X*E' + E*X*A' + Q
 lyapdg_residual(X, A, Q, E) = A*X*A' - E*X*E' + Q
 
 
+ensure_matrix(A) = (A isa Number ? fill(A, (1,1)) : A)
+ensure_matrix(A::Diagonal) = Matrix(A) # Due to bug in linalg
 
-arec_residual(X, A, B, Q, R, S) = A'*X + X*A - (X*B[:,:] + S[:,:])/ControlMatrixEquations.to_matrix(eltype(R), R)*(X*B[:,:] + S[:,:])' + Q
+arec_residual(X, A, B, Q, R, S) = A'*X + X*A - (X*B[:,:] + S[:,:])/ensure_matrix(R)*(X*B[:,:] + S[:,:])' + Q
 arec_residual(X, A, B, Q, R, S::Nothing=nothing) = arec_residual(X, A, B, Q, R, zeros(size(B)))
-arecg_residual(X, E, A, B, Q, R, S) = A'*X*E + E'*X*A - (E'*X*B[:,:] + S[:,:])/ControlMatrixEquations.to_matrix(eltype(R), R)*(E'*X*B[:,:] + S[:,:])' + Q
+arecg_residual(X, E, A, B, Q, R, S) = A'*X*E + E'*X*A - (E'*X*B[:,:] + S[:,:])/ensure_matrix(R)*(E'*X*B[:,:] + S[:,:])' + Q
 arecg_residual(X, E, A, B, Q, R, S::Nothing=nothing) = arecg_residual(X, E, A, B, Q, R, zeros(size(B)))
 
 ared_residual(X, A, B, Q, R, S) = A'*X*A - X - (A'*X*B[:,:] + S[:,:])/(B'*X*B + R)*(A'*X*B[:,:] + S[:,:])' + Q

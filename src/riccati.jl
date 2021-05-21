@@ -84,12 +84,12 @@ end
 function _ared(A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}; stabsol::Bool=true) where {T <: Number}
     n, m = size(B)
 
-    M = [Matrix{T}(I, n, n) B*(R\B');
+    L = [Matrix{T}(I, n, n) B*(R\B');
          zeros(n,n) A']
-    L = [A zeros(n,n);
+    M = [A zeros(n,n);
          -Q Matrix{T}(I, n, n)]
 
-    return _sovle_ARE_pencil(L, M, Val(:d), stabsol=stabsol)
+    return _sovle_ARE_pencil(M, L, Val(:d), stabsol=stabsol)
 end
 
 

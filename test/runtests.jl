@@ -12,6 +12,8 @@ my_tests = [
             "test_sylvlyap_naive",
             "test_sylvlyap",
             "test_lyap_special_cases",
+            "test_carex",
+            "test_darex",
             "test_arec",
             "test_ared"
             ]
@@ -32,5 +34,5 @@ lyapd_rhs = (A, X) -> -Matrix(Hermitian(A*X*A' - X))
         include("$(test).jl")
         println("Test set $test took $(round(time()-_t0, digits=2)) seconds")
     end
-    println("Ran all code tests in $(round(time()-_t0_all, digits=2)) seconds")
+    println("All tests took $(round(time()-_t0_all, digits=2)) seconds")
 end

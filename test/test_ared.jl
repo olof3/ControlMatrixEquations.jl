@@ -1,32 +1,106 @@
-@testset "test ared" begin
-
-# Test for scalars
-ared(0, 1, 4, 3, 4)[1] ≈ fill(3.0, (1,1))
-ared(0, 2, 10, 0, 6)[1] ≈ fill(9.0, (1,1)) # 1 is also a solution, but not stabilizing
-
-
-@testset "DAREX tests" begin
-
-darex_tests = [("1.2", Dict(), 1e-11),
-               ("1.3", Dict(), 1e-14),
-               ("1.4", Dict(), 1e-15),
-               ("1.5", Dict(), 1e-11),
-               ("1.6", Dict(), 1e-13),
-               ("2.1", Dict(:δ=>1), 1e-10),
-               ("2.1", Dict(:δ=>1e6), 1e-7),
-               ("4.1", Dict(:n=>10), 2e-13)
-               ]
-
-for (id,kwargs,atol) in darex_tests
-    @testset "DAREX $id $kwargs" begin
-        A, B, Q, R, S, Xtrue = darex(id; kwargs...)
+function test_ared(A, B, Q, R, S=nothing; tol=1e-11)
+    @testset "ared(::$(typeof(A)), ::$(typeof(B)), ::$(typeof(Q)), ::$(typeof(R)), ::$(typeof(S)))" begin
         X = ared(A, B, Q, R, S)[1]
-        @test norm(ared_residual(X, A, B, Q, R, S)) ≈ 0 atol=atol # Doesn't check stabilizing solution...
+        residual = ared_residual(X, A, B, Q, R, S)    
+        @test norm(residual) <= tol
     end
+end
+
+function test_aredg(E, A, B, Q, R, S=nothing; tol=1e-11)
+    @testset "aredg(::$(typeof(A)), ::$(typeof(A)), ::$(typeof(B)), ::$(typeof(Q)), ::$(typeof(R)), ::$(typeof(S)))" begin
+        X = aredg(E, A, B, Q, R, S)[1]
+        residual = aredg_residual(X, E, A, B, Q, R, S)
+        @test norm(residual) <= tol
+    end
+end
+
+##
+
+Random.seed!(1000)
+
+n = 30
+m = 5
+Ar = 0.1*randn(n, n)
+Ac = 0.1*randn(ComplexF64, n, n)
+
+br = randn(n)
+bc = randn(ComplexF64, n)
+Br = randn(n, m)
+Bc = randn(ComplexF64, n, m)
+
+Q = I(n)
+
+Qr = Symmetric(randn(n,n)) + 20I
+Qc = Hermitian(randn(n,n)) + 20I
+
+r = 1.0
+R = I(m)
+Rr = Symmetric(randn(n,n)) + 20I
+Rc = Hermitian(randn(n,n)) + 20I
+
+E = randn(n, n) + 4I
+
+sr = randn(size(br))
+sc = randn(ComplexF64, size(br))
+Sr = 0.1randn(size(Bc))
+Sc = 0.1randn(ComplexF64, size(Bc))
+
+##
+
+@testset "ared" begin
+
+test_ared(Ar, br, Q, r, tol=1e-10)
+test_ared(Ar, Br, Q, R, tol=1e-10)
+test_ared(Ar, bc, Q, r, tol=1e-10)
+test_ared(Ar, Bc, Q, R, tol=1e-10)
+
+test_ared(Ac, br, Q, r, tol=1e-10)
+test_ared(Ac, Br, Q, R, tol=1e-10)
+test_ared(Ac, bc, Q, r, tol=1e-10)
+test_ared(Ac, Bc, Q, R, tol=1e-10)
+
+test_ared(Ac, br, Qc, r, tol=1e-10)
+test_ared(Ac, Br, Qc, R, tol=1e-10)
+test_ared(Ac, bc, Qc, r, tol=1e-10)
+test_ared(Ac, Bc, Qc, R, tol=1e-10)
+
+test_ared(Ac, br, Qr, r, sr, tol=1e-10)
+test_ared(Ac, Br, Qr, R, Sc, tol=1e-10)
+test_ared(Ac, bc, Qr, r, sr, tol=1e-10)
+test_ared(Ac, Bc, Qr, R, Sc, tol=1e-10)
+
+# With uniform scaling
+test_ared(Ar, Bc, Q, I, tol=1e-10)
+test_ared(Ar, Bc, I, R, tol=1e-10)
 
 end
 
+
+# Apparently difficult to get good accuracy when there is only one input signal
+@testset "aredg" begin
+
+test_aredg(E, Ar, br, Q, r, tol=1e-10)
+test_aredg(E, Ar, Br, Q, R, tol=1e-10)
+test_aredg(E, Ar, bc, Q, r, tol=1e-10)
+test_aredg(E, Ar, Bc, Q, R, tol=1e-10)
+
+test_aredg(E, Ac, br, Q, r, tol=1e-10)
+test_aredg(E, Ac, Br, Q, R, tol=1e-10)
+test_aredg(E, Ac, bc, Q, r, tol=1e-10)
+test_aredg(E, Ac, Bc, Q, R, tol=1e-10)
+
+test_aredg(E, Ac, br, Qc, r, tol=1e-10)
+test_aredg(E, Ac, Br, Qc, R, tol=1e-10)
+test_aredg(E, Ac, bc, Qc, r, tol=1e-10)
+test_aredg(E, Ac, Bc, Qc, R, tol=1e-10)
+
+test_aredg(E, Ac, br, Qr, r, tol=1e-10)
+test_aredg(E, Ac, Br, Qr, R, tol=1e-10)
+test_aredg(E, Ac, bc, Qr, r, tol=1e-10)
+test_aredg(E, Ac, Bc, Qr, R, tol=1e-10)
+
+test_aredg(E, Ac, Bc, I, R, tol=1e-10)
+test_aredg(I, Ac, Bc, Qr, R, tol=1e-10)
+test_aredg(I, Ac, Bc, I, I, Sr, tol=1e-10)
+
 end
-
-
-end # testset
