@@ -9,7 +9,7 @@ ared(0, 2, 10, 0, 6)[1] ≈ fill(9.0, (1,1)) # 1 is also a solution, but not sta
 
 darex_tests = [("1.2", Dict(), 1e-11),
                ("1.3", Dict(), 1e-14),
-               # ("1.4", Dict(), 1e-15), FIXME
+               ("1.4", Dict(), 1e-15),
                ("1.5", Dict(), 1e-11),
                ("1.6", Dict(), 1e-13),
                ("2.1", Dict(:δ=>1), 1e-10),

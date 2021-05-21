@@ -153,7 +153,7 @@ end
 
 
 # The extended pencil method can handle poorly conditioned R matrices
-function _ARE_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}, S=nothing; balance=false, stabsol=stabsol) where {T <: Number}
+function _ARE_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}, S=nothing; balance=true, stabsol=stabsol) where {T <: Number}
     n, m = size(B)
 
     (isnothing(E) || E == I) && (E = Matrix{T}(I, n, n))
@@ -230,7 +230,7 @@ function _sovle_ARE_pencil(M, L, timetype::Union{Val{:c},Val{:d}}, E = I; stabso
     count(select) != n && error("Unequal numbers of stable and anti-stable eigenvalues of ARE pencil")
     ordschur!(schurfact, select)
 
-    if E === I
+    if E == I
         Z11 = schurfact.Z[1:n, 1:n]
         Z21 = schurfact.Z[n+1:end, 1:n]
     else
