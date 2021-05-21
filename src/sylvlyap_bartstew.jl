@@ -50,12 +50,37 @@ function sylvd(A, B, C, ::Val{:bartstew})
 end
 
 
+
+"""
+    sylvd(A, B, C, E, F) -> X
+
+Compute the solution `X` to the general Sylvester equation
+
+`AXB + EXF = C`
+
+"""
+function sylvg(A, B, C, E, F, ::Val{:bartstew})
+
+    _check_sylv_inputs(A, B, C, E, F)
+
+    At2, Et2, UA, VA = schur(A', E')
+    B2, F2, UB, VB = schur(B, F)
+
+    C2 = VA'*C*VB
+
+    Y = _sylvg_schur!(Matrix(At2'), B2, C2, Matrix(Et2'), F2, Val(:sylv))
+
+    X = mul!(Y, UA, Y*UB')
+end
+
 """
     lyapc(A, Q) -> X
+    lyapc(A, Q, E) -> X
 
 Compute the solution `X` of the continuous-time Lyapunov equation
 
-`AX + XA' + Q = 0`
+    `AX + XA' + Q = 0`
+    `AXE' + EXA' + Q = 0`
 
 A solution exists unless `A` has an eigenvalue λ = ±1 or an eigenvalue pair λ₁λ₂ = 1.
 
@@ -74,17 +99,29 @@ function lyapc(A, Q, ::Val{:bartstew})
 
     X = mul!(Y, U, Y*U')
 end
+function lyapc(A, Q, E, ::Val{:bartstew})
 
+     _check_lyap_inputs(A, Q, E)
+
+    At2, Et2, U, V = schur(A', E')
+
+    Q2 = V'*Q*V
+
+    Y = _sylvg_schur!(Matrix(At2'), Et2, lmul!(-1, Q2), Matrix(Et2'), At2, Val(:lyap))
+
+    X = mul!(Y, U, Y*U')
+end
 
 """
     X = lyapd(A, Q) -> X
 
 Compute the solution `X` to the discrete-time Lyapunov equation
 
-`AXA' - X + Q = 0`
+    `AXA' - X = -Q`
+    `AXA' - EXE' = -Q`
 
-A solution exists unless `A` has an eigenvalue λ = ±1 or an eigenvalue pair λ₁λ₂ = 1 .
-
+A solution exists unless `A` has an eigenvalue λ = ±1 or an eigenvalue pair λ₁λ₂ = 1.
+#FIXME: Condition for generalized equation
 
 [1] **Barraud, A.** (1977) "A numerical algorithm to solve A'XA - X = Q"
     IEEE Transactions on Automatic Control
@@ -105,14 +142,25 @@ function lyapd(A, Q, ::Val{:bartstew})
 
     X = mul!(Y, U, Y*U')
 end
+function lyapd(A, Q, E, ::Val{:bartstew})
 
+    _check_lyap_inputs(A, Q, E)
+
+   At2, Et2, U, V = schur(A', E')
+
+   Q2 = V'*Q*V
+
+   Y = _sylvg_schur!(Matrix(At2'), At2, lmul!(-1, Q2), lmul!(-1, Matrix(Et2')), Et2, Val(:lyap))
+
+   X = mul!(Y, U, Y*U')
+end
 
 """
     sylvc_schur!(A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix) -> X
 
 Compute the solution `X` to the continuous-time Sylvester equation
 
-`AX + XB = C`
+    `AX + XB = C`
 
 where `A` is assumed to have lower Schur form (quasi-triangular, 1x1 & 2x2 blocks on the diagonal)
 `B` is assumed to have upper Schur form
@@ -154,7 +202,7 @@ function _sylvc_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Va
 end
 function _sylvc_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Val{:lyap}}, ::Val{:realschur})
 
-    _, ba, nblocksa = _schurstructure(A, Val(:L)) # A is assumed upper triangualar
+    _, ba, nblocksa = _schurstructure(A, Val(:L)) # A is assumed upper quasi triangualar
     _, bb, nblocksb = _schurstructure(B, Val(:U))
 
     @inbounds for j=1:nblocksb
@@ -186,12 +234,12 @@ end
 
 Compute the solution `X` to the discrete-time Sylvester equation
 
-`AXB - X = C`
+    `AXB - X = C`
 
 where `A` is assumed to have lower Schur form (quasi-triangular, 1x1 & 2x2 blocks on the diagonal)
 `B` is assumed to have upper Schur form
 
-If the matrix `C` has the right type, it is overwritten with the solution `X`.
+If the matrix `C` is a `Matrix` of the right type, then it is overwritten with the solution `X`.
 
 See also `sylvd`
 """
@@ -236,10 +284,10 @@ function _sylvd_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Va
 end
 function _sylvd_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Val{:lyap}}, ::Val{:realschur})
 
-    G = zeros(eltype(C), size(A,1), size(B, 1)) # G keeps track of A*X for improved performance
+    G = zeros(eltype(C), size(C)) # G keeps track of A*X for improved performance
 
     # get block dimensions, block indices, nbr of blocks
-    _, ba, nblocksa = _schurstructure(A, Val(:L)) # A is assumed upper triangualar
+    _, ba, nblocksa = _schurstructure(A, Val(:L)) # A is assumed upper quasi triangualar
     _, bb, nblocksb = _schurstructure(B, Val(:U))
 
     @inbounds for j=1:nblocksb
@@ -265,6 +313,92 @@ function _sylvd_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Va
             end
 
             mul!(Gij, Aii, Cij, 1, 1)
+        end
+    end
+    return C
+end
+
+"""
+    sylvg_schur!(A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix, E::AbstractMatrix, F::AbstractMatrix) -> X
+
+Compute the solution `X` to the discrete-time Sylvester equation
+
+    `AXB + EXF = C`
+
+See also `sylvc`, `sylvd`
+"""
+_sylvg_schur!(A::Matrix, B::Matrix, C::Matrix, E::Matrix, F::Matrix, alg::Union{Val{:sylv},Val{:lyap}}) =
+    _sylvg_schur!(A, B, C, E, F, alg, any(isreal, (A, B, E, F)) ? Val(:realschur) : Val(:complexschur))
+
+function _sylvg_schur!(A::Matrix, B::Matrix, C::Matrix, E::Matrix, F::Matrix, alg::Union{Val{:sylv},Val{:lyap}}, ::Val{:complexschur})
+
+    G = zeros(eltype(C), size(A,1), size(B, 1)) # G keeps track of A*X for improved performance
+    H = zeros(eltype(C), size(A,1), size(B, 1)) # H keeps track of E*X for improved performance
+
+    @inbounds for j=1:size(B, 1)
+        i0 = (alg === Val(:lyap) ? j : 1)
+
+        for i=i0:size(A, 1)
+
+            # Compute Gij up to the contribution from Aii*Xij which is added at the end of each iteration
+            if i > 1
+                G[i,j] += sum(A[i,k] * C[k,j] for k=1:i-1)
+                H[i,j] += sum(E[i,k] * C[k,j] for k=1:i-1)
+            end
+
+            C[i,j] -= sum(G[i,k] * B[k,j] for k=1:j)
+            C[i,j] -= sum(H[i,k] * F[k,j] for k=1:j)
+
+            C[i,j] = sylvg(A[i,i], B[j,j], C[i,j], E[i,i], F[j,j]) # C[i,j] now contains  solution X[i,j]
+
+            if alg === Val(:lyap) && i > j
+                C[j,i] = conj(C[i,j])
+            end
+
+            G[i,j] += A[i, i] * C[i, j]
+            H[i,j] += E[i, i] * C[i, j]
+        end
+    end
+    return C
+end
+function _sylvg_schur!(A::Matrix, B::Matrix, C::Matrix, E::Matrix, F::Matrix, alg::Union{Val{:sylv},Val{:lyap}}, ::Val{:realschur})
+
+    G = zeros(eltype(C), size(A,1), size(B, 1)) # G keeps track of A*X for improved performance
+    H = zeros(eltype(C), size(A,1), size(B, 1)) # H keeps track of E*X for improved performance
+
+    # get block dimensions, block indices, nbr of blocks
+    _, ba, nblocksa = _schurstructure(A, E, Val(:L))
+    _, bb, nblocksb = _schurstructure(B, F, Val(:U))
+
+    @inbounds for j=1:nblocksb
+        i0 = (alg === Val(:lyap) ? j : 1)
+
+        for i=i0:nblocksa
+            Aii = view(A, ba[i], ba[i])
+            Bjj = view(B, bb[j], bb[j])
+            Cij = view(C, ba[i], bb[j])
+            Eii = view(E, ba[i], ba[i])
+            Fjj = view(F, bb[j], bb[j])
+
+            Gij = view(G, ba[i], bb[j])
+            Hij = view(H, ba[i], bb[j])
+
+            @views mul!(Gij, A[ba[i], 1:ba[i][1]-1], C[1:ba[i][1]-1, bb[j]], 1, 1)
+            @views mul!(Hij, E[ba[i], 1:ba[i][1]-1], C[1:ba[i][1]-1, bb[j]], 1, 1)
+
+            @views mul!(Cij, G[ba[i], 1:bb[j][end]], B[1:bb[j][end], bb[j]], -1, 1)
+            @views mul!(Cij, H[ba[i], 1:bb[j][end]], F[1:bb[j][end], bb[j]], -1, 1)
+
+            _sylvg!(Aii, Bjj, Cij, Eii, Fjj) # Cij now contains the solution Xij
+
+            if alg === Val(:lyap) && i > j
+                for l=bb[j], k=ba[i] # Avoids aliasing of copyto!
+                    C[l,k] = conj(C[k,l])
+                end
+            end
+
+            mul!(Gij, Aii, Cij, 1, 1)
+            mul!(Hij, Eii, Cij, 1, 1)
         end
     end
     return C
