@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       continue-on-error: ${{ matrix.version == 'nightly' }} # Allow nightly to fail and workflow still count as completed
       matrix:
-        version: ['1.3', '1', 'nightly']
+        version: ['1', 'nightly']
         os: [ubuntu-latest]
         arch: [x64]
     steps:

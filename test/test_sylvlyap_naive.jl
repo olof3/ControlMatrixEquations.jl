@@ -47,12 +47,14 @@ X = sylvg(Ac, Bc, Cc, E, F, Val(:naive))
 @test norm(sylvg_residual(X, Ac, Bc, Cc, E, F)) < 1e-14
 
 X = sylvg(Ac, im*B, C, E, F, Val(:naive))
-@test norm(sylvg_residual(X, Ac, im*B, C, E, F)) < 2e-14
+@test norm(sylvg_residual(X, Ac, im*B, C, E, F)) < 5e-14
 
 end
 
 
 
+
+@testset "lyap*_naive" begin
 
 X = lyapc(A, Qr, Val(:naive))
 @test norm(lyapc_residual(X, A, Qr)) < 1e-13
@@ -80,32 +82,4 @@ X = lyapd(2A, Qr, E, Val(:naive))
 X = lyapd(Ac, Qc, 2E, Val(:naive))
 @test norm(lyapdg_residual(X, Ac, Qc, 2E)) < 1e-13
 
-
-
-#@edit lyapd(Ac, Qc, E, Val(:naive))
-X = sylvg(Ac, Ac', -Qc, -E, E', Val(:naive))
-X = sylvg(Ac, Ac', -Qc, -E, E', Val(:bartstew))
-
-MatrixEquations.gsylv(Ac, Ac', -E, E', -Qc)
-norm(sylvg_residual(X, Ac, Ac', -Qc, -E, E'))
-
-
-@testset "lyap*_naive" begin
-
-
-X = sylvc(Ac, B, C, Val(:naive))
-@test norm(sylvc_residual(X, Ac, B, C)) < 5e-15
-
-X = sylvd(A, B, C, Val(:naive))
-@test norm(sylvd_residual(X, A, B, C)) < 5e-15
-
-X = sylvd(Ac, B, C, Val(:naive))
-@test norm(sylvd_residual(X, Ac, B, C)) < 5e-15
-
-X = sylvg(A, B, C, E, F, Val(:naive))
-@test norm(sylvg_residual(X, A, B, C, E, F)) < 1e-14
-
-X = sylvg(Ac, B, C, E, F, Val(:naive))
-@test norm(sylvg_residual(X, Ac, B, C, E, F)) < 1e-14
-    
 end
