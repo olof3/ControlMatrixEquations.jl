@@ -34,10 +34,17 @@ function arecg(E, A, B, Q, R, S=nothing; balance=false, stabsol=true)
     _ARE_extended_pencil(Val(:c), E, A, B, Q, R, S, stabsol=stabsol, balance=balance)
 end
 
+"""
+    arec_noinv(A, G, Q)
 
-function aredg(E, A, B, Q, R, S=nothing; balance=false, stabsol=true)
-    E, A, B, Q, R, S = _check_ARE_inputs(E, A, B, Q, R, S)
-    _ARE_extended_pencil(Val(:d), E, A, B, Q, R, S, stabsol=stabsol, balance=balance)
+Find the solution `X` to the Riccati equation
+`A'X + XA - XGX + Q = 0`
+"""
+function arec_noinv(A::Matrix{T}, G::Matrix{T}, Q::Matrix{T}; stabsol=true) where {T <: Number}
+    M = [A  -G;
+        -Q  -A']
+
+    return _sovle_ARE_pencil(M, I, Val(:c), stabsol=stabsol)
 end
 
 
@@ -65,6 +72,26 @@ function ared(A::AbstractNumOrArray, B::AbstractNumOrArray, Q::Union{AbstractNum
         return _ARE_extended_pencil(Val(:d), I, A, B, Q, R, S, stabsol=stabsol)
     end
 end
+function aredg(E, A, B, Q, R, S=nothing; balance=false, stabsol=true)
+    E, A, B, Q, R, S = _check_ARE_inputs(E, A, B, Q, R, S)
+    _ARE_extended_pencil(Val(:d), E, A, B, Q, R, S, stabsol=stabsol, balance=balance)
+end
+
+
+
+# Solve the dicrete-time Riccati (with S=0) by setting
+# up the standard matrix pencil
+function _ared(A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}; stabsol::Bool=true) where {T <: Number}
+    n, m = size(B)
+
+    M = [Matrix{T}(I, n, n) B*(R\B');
+         zeros(n,n) A']
+    L = [A zeros(n,n);
+         -Q Matrix{T}(I, n, n)]
+
+    return _sovle_ARE_pencil(L, M, Val(:d), stabsol=stabsol)
+end
+
 
 """
     _check_ARE_inputs(E, A, B, Q, R, S)
@@ -100,32 +127,6 @@ function _check_ARE_inputs(E, A, B, Q, R, S)
 end
 #_check_ARE_inputs(A, B, Q, R) = _check_ARE_inputs(A, B, Q, R, nothing)
 
-# Solve the dicrete-time Riccati (with S=0) by setting
-# up the standard matrix pencil
-function _ared(A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}; stabsol::Bool=true) where {T <: Number}
-    n, m = size(B)
-
-    M = [Matrix{T}(I, n, n) B*(R\B');
-         zeros(n,n) A']
-    L = [A zeros(n,n);
-         -Q Matrix{T}(I, n, n)]
-
-    return _sovle_ARE_pencil(L, M, Val(:d), stabsol=stabsol)
-end
-
-"""
-    arec_noinv(A, G, Q)
-
-Find the solution `X` to the Riccati equation
-`A'X + XA - XGX + Q = 0`
-"""
-function arec_noinv(A::Matrix{T}, G::Matrix{T}, Q::Matrix{T}; stabsol=true) where {T <: Number}
-    M = [A  -G;
-        -Q  -A']
-
-    return _sovle_ARE_pencil(M, I, Val(:c), stabsol=stabsol)
-end
-
 
 # This is the same balancing used in scipy.linalg,
 # but modified (hopefully correctly) for better readability
@@ -152,7 +153,7 @@ end
 
 
 # The extended pencil method can handle poorly conditioned R matrices
-function _ARE_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}, S=nothing; balance=true, stabsol=stabsol) where {T <: Number}
+function _ARE_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}, S=nothing; balance=false, stabsol=stabsol) where {T <: Number}
     n, m = size(B)
 
     (isnothing(E) || E == I) && (E = Matrix{T}(I, n, n))
@@ -242,5 +243,5 @@ function _sovle_ARE_pencil(M, L, timetype::Union{Val{:c},Val{:d}}, E = I; stabso
 
     X = Z21 / Z11
 
-    return (X + X')/2, schurfact.values[1:n]
+    return X, schurfact.values[1:n] # FIXME: Consier symmetrizing X
 end
