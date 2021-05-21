@@ -12,7 +12,7 @@ function sylvd(A, B, C, ::Val{:naive})
     return reshape(Xv, size(C))
 end
 function sylvg(A, B, C, E, F, ::Val{:naive})
-    Xv = ( kron(transpose(B), A) - kron(transpose(E), F) ) \ C[:] # using the vectorization identity vec(AXB) = kron(B'*A)*vec(X)
+    Xv = ( kron(transpose(B), A) + kron(transpose(F), E) ) \ C[:] # using the vectorization identity vec(AXB) = kron(B'*A)*vec(X)
     return reshape(Xv, size(C))
 end
 
@@ -21,20 +21,20 @@ end
 # Mapping from Cartesian index into vector represenentation of Symmetric matrix
 @inline sub2triidx(i,j) = (j >= i ? (j*(j-1))>>>1 + i : (i*(i-1))>>>1 + j)
 
-lyapc(A, Q, ::Val{:naive}) = lyapc(A, Q, nothing, Val(:naive))
-function lyapc(A, Q, E, ::Val{:naive}) # Only works for real matrices A
+lyapc(A, Q, E, ::Val{:naive}) = sylvg(A, E', -Q, E, A', Val(:naive))
+function lyapc(A, Q, ::Val{:naive}) # Only works for real matrices A
     # Sets up and solves a system of equations for the upper triangular part of X
     # and solves that equation. This gives an n(n+1)/2 system instead of n^2
     # ONLY WORKS FOR REAL A!
     # Should be able to to base the discrete time version on this as well
-    _check_lyap_inputs(A, Q, E)
+    _check_lyap_inputs(A, Q)
 
     if !isreal(A)
-        return isnothing(E) ? sylvc(A, A', -Q) : sylvg(A, A', -Q, E, E')
+        return sylvc(A, A', -Q, Val(:naive))
     end
 
     n = size(Q, 1)
-    nR = (n*(n+1)) >>> 1 # Ssize of the system to be solved
+    nR = (n*(n+1)) >>> 1 # Size of the system to be solved
 
     R = zeros(eltype(A), nR, nR)
     minusQv = Vector{eltype(Q)}(undef, nR)
@@ -49,11 +49,6 @@ function lyapc(A, Q, E, ::Val{:naive}) # Only works for real matrices A
             for k=1:n
                 R[m, sub2triidx(k,j)] += A[i,k]
                 R[m, sub2triidx(i,k)] += A[j,k]
-
-                if !isnothing(E)
-                    R[m, sub2triidx(k,j)] += A[i,k]
-                    R[m, sub2triidx(i,k)] += A[j,k]
-                end
             end
         end
     end
@@ -66,4 +61,7 @@ function lyapc(A, Q, E, ::Val{:naive}) # Only works for real matrices A
     return X
 end
 lyapd(A, Q, ::Val{:naive}) = sylvd(A, A', -Q, Val(:naive)) # No specilized method yet
-lyapd(A, Q, E, ::Val{:naive}) = sylvg(A, A', -Q, E, E', Val(:naive)) # No specilized method yet
+lyapd(A, Q, E, ::Val{:naive}) = sylvg(A, A', -Q, -E, E', Val(:naive)) # No specilized method yet
+
+
+# Fixme: Perhaps check the inputs, Symmetry of Q etc.

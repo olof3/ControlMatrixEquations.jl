@@ -36,6 +36,11 @@ b_RS = [1:2, 3:4, 5:6, 7:7, 8:8]
 @test (d_RS, b_RS, 5) == ControlMatrixEquations._schurstructure(R', S', Val(:L))
 
 
+Random.seed!(1)
+T = diagm(0 => ones(15), -1 => [-2, 0, -1, 0, 0, -3, 0, -4, 0, 0, 2.3, 0, 0, 2.0] )
+@test ControlMatrixEquations._schurstructure(T, Val(:U)) == ControlMatrixEquations._schurstructure(T, I(15), Val(:U))
+@test ControlMatrixEquations._schurstructure(T', Val(:L)) == ControlMatrixEquations._schurstructure(T', I(15), Val(:L))
+
 end
 
 

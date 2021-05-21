@@ -202,8 +202,8 @@ function _sylvc_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Va
 end
 function _sylvc_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Val{:lyap}}, ::Val{:realschur})
 
-    _, ba, nblocksa = _schurstructure(A, Val(:L)) # A is assumed upper quasi triangualar
-    _, bb, nblocksb = _schurstructure(B, Val(:U))
+    _, ba, nblocksa = _schurstructure(A, I(size(A,1)), Val(:L)) # A is assumed upper quasi triangualar
+    _, bb, nblocksb = _schurstructure(B, I(size(B,1)), Val(:U))
 
     @inbounds for j=1:nblocksb
         i0 = (alg === Val(:lyap) ? j : 1)

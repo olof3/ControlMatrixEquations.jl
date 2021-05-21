@@ -44,7 +44,7 @@ function _schurstructure(R::AbstractMatrix, S::Union{AbstractMatrix,Nothing}, ul
         if ul === Val(:U)
             S === nothing ? j -> iszero(R[j+1, j]) : j -> iszero(R[j+1, j]) && iszero(S[j+1, j])
         else
-            S === nothing ? j -> iszero(R[1, j+1]) : j -> iszero(R[j, j+1]) && iszero(S[j, j+1])
+            S === nothing ? j -> iszero(R[j, j+1]) : j -> iszero(R[j, j+1]) && iszero(S[j, j+1])
         end
 
     j = 1 # current column (if :U) or row (if :L) index
