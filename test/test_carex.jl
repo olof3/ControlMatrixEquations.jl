@@ -14,7 +14,7 @@ carex_tests = [("1.4", Dict(), 1e-12),
                ("2.1", Dict(:ϵ=>1e-2), 1e-7), # A little bit high tolerance..
                ("2.2", Dict(), 1e-7),
                ("2.3", Dict(), 1e-12),
-               ("4.1", Dict(:n=>10), 1e-8) # Also not too impressive
+               ("4.1", Dict(:n=>10), 5e-8)
                ]
 
 for (id,kwargs,atol) in carex_tests

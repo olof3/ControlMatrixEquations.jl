@@ -1,16 +1,22 @@
 function test_arec(A, B, Q, R, S=nothing; tol=1e-11)
     @testset "arec(::$(typeof(A)), ::$(typeof(B)), ::$(typeof(Q)), ::$(typeof(R)), ::$(typeof(S)))" begin
-        X = arec(A, B, Q, R, S)[1]
+        X, cl_eigvals = arec(A, B, Q, R, S)
         residual = arec_residual(X, A, B, Q, R, S)    
         @test norm(residual) <= tol
+        @test all(real.(cl_eigvals) .< 0)
+        
+        Λ = isnothing(S) ? eigvals(A - B*inv(R)*B'*X) : eigvals(A - B*inv(R)*(S' + B'*X))
+        @test sort(real(Λ)) ≈ sort(real(cl_eigvals)) && sort(imag(Λ)) ≈ sort(imag(cl_eigvals)) # Sloppy but convenient
     end
 end
 
 function test_arecg(E, A, B, Q, R, S=nothing; tol=1e-11)
     @testset "arecg(::$(typeof(A)), ::$(typeof(A)), ::$(typeof(B)), ::$(typeof(Q)), ::$(typeof(R)), ::$(typeof(S)))" begin
-        X = arecg(E, A, B, Q, R, S)[1]
+        X, cl_eigvals = arecg(E, A, B, Q, R, S)
         residual = arecg_residual(X, E, A, B, Q, R, S)
         @test norm(residual) <= tol
+        @test all(real.(cl_eigvals) .< 0)
+        @test isposdef(X)
     end
 end
 
@@ -75,6 +81,7 @@ test_arec(Ar, Bc, I, R)
 
 end
 
+##
 
 # Apparently difficult to get good accuracy when there is only one input signal
 @testset "arecg" begin

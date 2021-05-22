@@ -62,6 +62,3 @@ function lyapc(A, Q, ::Val{:naive}) # Only works for real matrices A
 end
 lyapd(A, Q, ::Val{:naive}) = sylvd(A, A', -Q, Val(:naive)) # No specilized method yet
 lyapd(A, Q, E, ::Val{:naive}) = sylvg(A, A', -Q, -E, E', Val(:naive)) # No specilized method yet
-
-
-# Fixme: Perhaps check the inputs, Symmetry of Q etc.

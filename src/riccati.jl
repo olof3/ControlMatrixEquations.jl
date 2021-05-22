@@ -19,7 +19,7 @@ function arec(A::AbstractNumOrArray, B::AbstractNumOrArray, Q::Union{AbstractNum
             return arec_noinv(A - B/R*S', B/R*B', Q - Hermitian(S/R*S'), stabsol=stabsol)
         end
     else
-        return _ARE_extended_pencil(Val(:c), I, A, B, Q, R, S, stabsol=stabsol)
+        return _solve_ARE_extended_pencil(Val(:c), I, A, B, Q, R, S, stabsol=stabsol)
     end
 end
 
@@ -31,7 +31,7 @@ Find the stabilizing solution `X` to the continuous-time generalized Riccati equ
 """
 function arecg(E, A, B, Q, R, S=nothing; balance=false, stabsol=true)
     E, A, B, Q, R, S = _check_ARE_inputs(E, A, B, Q, R, S)
-    _ARE_extended_pencil(Val(:c), E, A, B, Q, R, S, stabsol=stabsol, balance=balance)
+    _solve_ARE_extended_pencil(Val(:c), E, A, B, Q, R, S, stabsol=stabsol, balance=balance)
 end
 
 """
@@ -69,12 +69,12 @@ function ared(A::AbstractNumOrArray, B::AbstractNumOrArray, Q::Union{AbstractNum
             return _ared(A - B/R*S', B, Q - S/R*S', R, stabsol=stabsol)
         end
     else
-        return _ARE_extended_pencil(Val(:d), I, A, B, Q, R, S, stabsol=stabsol)
+        return _solve_ARE_extended_pencil(Val(:d), I, A, B, Q, R, S, stabsol=stabsol)
     end
 end
 function aredg(E, A, B, Q, R, S=nothing; balance=false, stabsol=true)
     E, A, B, Q, R, S = _check_ARE_inputs(E, A, B, Q, R, S)
-    _ARE_extended_pencil(Val(:d), E, A, B, Q, R, S, stabsol=stabsol, balance=balance)
+    _solve_ARE_extended_pencil(Val(:d), E, A, B, Q, R, S, stabsol=stabsol, balance=balance)
 end
 
 
@@ -151,9 +151,9 @@ function _balance_extended_pencil!(H::Matrix{T}, J::Matrix{T}, n::Int, m::Int) w
 end
 
 
-
+# Set up an extended pencial that is then compressed.
 # The extended pencil method can handle poorly conditioned R matrices
-function _ARE_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}, S=nothing; balance=true, stabsol=stabsol) where {T <: Number}
+function _solve_ARE_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T}, B::Matrix{T}, Q::Matrix{T}, R::Matrix{T}, S=nothing; balance=true, stabsol=stabsol) where {T <: Number}
     n, m = size(B)
 
     (isnothing(E) || E == I) && (E = Matrix{T}(I, n, n))
@@ -197,6 +197,7 @@ function _ARE_extended_pencil(timetype::Union{Val{:c},Val{:d}}, E, A::Matrix{T},
         ldiv!(D, X)
         #rdiv!(X, D) # Method missing in LinearAlgebra
         rmul!(X, inv(D))
+        return (X + X')/2, cl_eigvals
     end
 
     return X, cl_eigvals
@@ -243,5 +244,5 @@ function _sovle_ARE_pencil(M, L, timetype::Union{Val{:c},Val{:d}}, E = I; stabso
 
     X = Z21 / Z11
 
-    return X, schurfact.values[1:n] # FIXME: Consier symmetrizing X
+    return (X + X')/2, schurfact.values[1:n] # FIXME: Consier symmetrizing X
 end
