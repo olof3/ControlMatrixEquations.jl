@@ -36,8 +36,9 @@ _schurstructure(R::AbstractMatrix, ul::Union{Val{:U}, Val{:L}}) = _schurstructur
 function _schurstructure(R::AbstractMatrix, S::Union{AbstractMatrix,Nothing}, ul::Union{Val{:U}, Val{:L}})
     n = size(R,1)
 
-    d = Vector{Int32}(undef, n) # block sizes
-    b = Vector{UnitRange{Int32}}(undef, n) # block indices
+
+    d = Vector{Int}(undef, n) # block sizes
+    b = Vector{UnitRange{Int}}(undef, n) # block indices (do not use UnitRange{Int32}, julia issue #40931)
 
     # Create function for checking if the offdiagonal element below (:U) / to the right (:L) of element (j,j) is zero
     is_offdiag_zero =
