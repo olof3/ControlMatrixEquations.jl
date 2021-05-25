@@ -72,17 +72,13 @@ for small matrices (1x1, 1x2, 2x1, 2x2), overwriting the input `C`.
 function _sylvd!(A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix)    
     M, N = size(C)
     @inbounds if M == 2 && N == 2
-        Xv = _sylvd2(SMatrix{2,2}(A), SMatrix{2,2}(B), SMatrix{2,2}(C))
-        C[:] .= Xv
+        C[:] .= _sylvd2(SMatrix{2,2}(A), SMatrix{2,2}(B), SMatrix{2,2}(C))
     elseif M == 2 && N == 1
-        Xv = _sylvd2(SMatrix{2,2}(A), SMatrix{1,1}(B), SMatrix{2,1}(C))
-        C[:] .= Xv
+        C[:] .= _sylvd2(SMatrix{2,2}(A), SMatrix{1,1}(B), SMatrix{2,1}(C))
     elseif M == 1 && N == 2
-        Xv = _sylvd2(SMatrix{1,1}(A), SMatrix{2,2}(B), SMatrix{1,2}(C))
-        C[:] .= Xv
+        C[:] .= _sylvd2(SMatrix{1,1}(A), SMatrix{2,2}(B), SMatrix{1,2}(C))
     elseif M == 1 && N == 1
-        Xv = _sylvd2(SMatrix{1,1}(A), SMatrix{1,1}(B), SMatrix{1,1}(C))
-        C[:] .= Xv
+        C[:] .= _sylvd2(SMatrix{1,1}(A), SMatrix{1,1}(B), SMatrix{1,1}(C))
     else
         error("Matrix dimensionsins should not be greater than 2")
     end
