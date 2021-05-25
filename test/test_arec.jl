@@ -79,6 +79,13 @@ test_arec(Ac, Bc, Qr, R, Sc)
 test_arec(Ar, Bc, Q, I)
 test_arec(Ar, Bc, I, R)
 
+
+# Scalars/complex scalars
+@test arec(1, 2, 4, 2)[1] ≈ fill(2.0, (1,1))
+@test arec(1, 2, 1, 5, 1)[1] ≈ fill(2.0, (1,1))
+@test arec(1+im, 2, 1, 5, 1)[1] ≈ fill(2.0, (1,1))
+@test arec(1, 2-im, 1, 5, 1+2im)[1] ≈ fill(2.0, (1,1))
+
 end
 
 ##

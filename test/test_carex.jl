@@ -1,20 +1,11 @@
-@testset "arec" begin
-
-# Scalars/complex scalars
-@test arec(1, 2, 4, 2)[1] ≈ fill(2.0, (1,1))
-@test arec(1, 2, 1, 5, 1)[1] ≈ fill(2.0, (1,1))
-@test arec(1+im, 2, 1, 5, 1)[1] ≈ fill(2.0, (1,1))
-@test arec(1, 2-im, 1, 5, 1+2im)[1] ≈ fill(2.0, (1,1))
-
-
 @testset "CAREX" begin
 
 carex_tests = [("1.4", Dict(), 1e-12),
                ("1.5", Dict(), 1e-12),
-               ("2.1", Dict(:ϵ=>1e-2), 1e-7), # A little bit high tolerance..
+               ("2.1", Dict(:ϵ => 1e-2), 1e-7), # A little bit high tolerance..
                ("2.2", Dict(), 1e-7),
                ("2.3", Dict(), 1e-12),
-               ("4.1", Dict(:n=>10), 5e-8)
+               ("4.1", Dict(:n => 10), 5e-8)
                ]
 
 for (id,kwargs,atol) in carex_tests
@@ -27,4 +18,4 @@ end
 
 end # testset CAREX
 
-end # testset
+

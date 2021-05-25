@@ -81,6 +81,10 @@ test_ared(Ac, Bc, Qr, R, Sc, tol=1e-9)
 test_ared(Ar, Bc, Q, I, tol=1e-9)
 test_ared(Ar, Bc, I, R, tol=1e-9)
 
+# Test for scalars
+ared(0, 1, 4, 3, 4)[1] ≈ fill(3.0, (1,1))
+ared(0, 2, 10, 0, 6)[1] ≈ fill(9.0, (1,1)) # 1 is also a solution, but not stabilizing
+
 end
 
 ##

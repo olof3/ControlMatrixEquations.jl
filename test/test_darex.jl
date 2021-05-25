@@ -1,10 +1,3 @@
-@testset "test ared" begin
-
-# Test for scalars
-ared(0, 1, 4, 3, 4)[1] ≈ fill(3.0, (1,1))
-ared(0, 2, 10, 0, 6)[1] ≈ fill(9.0, (1,1)) # 1 is also a solution, but not stabilizing
-
-
 @testset "DAREX tests" begin
 
 darex_tests = [("1.2", Dict(), 1e-11),
@@ -27,6 +20,3 @@ for (id,kwargs,atol) in darex_tests
 end
 
 end
-
-
-end # testset
