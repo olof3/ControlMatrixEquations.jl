@@ -69,31 +69,32 @@ Find the solution `X` to the discrete-time Sylvester equation
 
 for small matrices (1x1, 1x2, 2x1, 2x2), overwriting the input `C`.
 """
-function _sylvd!(A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix)
+function _sylvd!(A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix)    
     M, N = size(C)
-    if M == 2 && N == 2
-        _sylvd!(A, B, C, Val(2), Val(2))
+    @inbounds if M == 2 && N == 2
+        Xv = _sylvd2(SMatrix{2,2}(A), SMatrix{2,2}(B), SMatrix{2,2}(C))
+        C[:] .= Xv
     elseif M == 2 && N == 1
-        _sylvd!(A, B, C, Val(2), Val(1))
+        Xv = _sylvd2(SMatrix{2,2}(A), SMatrix{1,1}(B), SMatrix{2,1}(C))
+        C[:] .= Xv
     elseif M == 1 && N == 2
-        _sylvd!(A, B, C, Val(1), Val(2))
+        Xv = _sylvd2(SMatrix{1,1}(A), SMatrix{2,2}(B), SMatrix{1,2}(C))
+        C[:] .= Xv
     elseif M == 1 && N == 1
-        _sylvd!(A, B, C, Val(1), Val(1))
+        Xv = _sylvd2(SMatrix{1,1}(A), SMatrix{1,1}(B), SMatrix{1,1}(C))
+        C[:] .= Xv
     else
         error("Matrix dimensionsins should not be greater than 2")
     end
-    return C
 end
-function _sylvd!(A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix, ::Val{M}, ::Val{N}) where {T <: Number, M, N}
-    As = SMatrix{M,M}(A)
-    Bs = SMatrix{N,N}(B)
-    Cvs = SMatrix{M,N}(C)[:] # vectorization of C
+function _sylvd2(A::SMatrix, B::SMatrix, C::SMatrix)
 
-    Xv = (kron(transpose(Bs), As) - SMatrix{M*N,M*N}(I)) \ Cvs # using the vectorization identity vec(AXB) = kron(B'*A)*vec(X)
+    M, N = size(C)
+    Xv = (kron(transpose(B), A) - SMatrix{M*N,M*N}(I)) \ C[:] # using the vectorization identity vec(AXB) = kron(B'*A)*vec(X)
 
     if any(!isfinite, Xv); error("Matrix equation has no solution, see ?sylvd or ?lyapd"); end
 
-    C .= reshape(Xv, M, N)
+    return Xv
 end
 
 
