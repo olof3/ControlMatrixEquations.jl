@@ -13,9 +13,8 @@ end
 to_matrix(T, A::AbstractVector) = Matrix{T}(reshape(A, length(A), 1))
 to_matrix(T, A::AbstractMatrix) = convert(Matrix{T}, A)
 to_matrix(T, A::Number) = fill(T(A), 1, 1)
-# Handle Adjoint Matrices
 to_matrix(T, A::Adjoint{R, MT}) where {R<:Number, MT<:AbstractMatrix} = to_matrix(T, MT(A))
-to_matrix(T, ::Nothing) = nothing # For matrices that are not supplied
+
 
 
 """

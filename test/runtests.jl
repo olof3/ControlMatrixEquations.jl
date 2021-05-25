@@ -12,6 +12,7 @@ my_tests = [
             "test_sylvlyap_naive",
             "test_sylvlyap",
             "test_lyap_special_cases",
+            "test_sylvlyap_generic",
             "test_sylvlyap_errors",
             "test_carex",
             "test_darex",
