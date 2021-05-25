@@ -19,52 +19,51 @@ to_matrix(T, ::Nothing) = nothing # For matrices that are not supplied
 
 
 """
-    `_schurstructure(R::AbstractMatrix, ul=Union{Val{:U}, Val{:L}}) -> (b, d, nblocks)`
+    `_schurstructure(S::AbstractMatrix, ul=Union{Val{:U}, Val{:L}}) -> (block_indicies, nblocks)`
+    `_schurstructure(S::AbstractMatrix, T::AbstractMatrix, ul=Union{Val{:U}, Val{:L}}) -> (block_indicies, nblocks)`
 
-Return the block strucutre of an upper quasi-traingular Schur matrix `R`.
-`ul` indicates if R is upper (`ul=Val(:U)`) or lower (`ul=Val(:L)`) triangular.
+Return the indicies of the diagonal blocks (1x1 or 2x2) of a quasi-traingular Schur matrix `S`.
+If `T` is provided, the joint structure of `S` and `T` is returned.
 
+`ul` indicates if `S` (and `T`) are upper (`ul=Val(:U)`) or lower (`ul=Val(:L)`) triangular.
 
-`d` contains the block sizees of each diagonal block (`1` or `2`)
-
-`b` contains the indices of the blocks
+`block_indicies` contains the indices of the blocks
 
 `nblocks` is the number of blocks
 
 """
-_schurstructure(R::AbstractMatrix, ul::Union{Val{:U}, Val{:L}}) = _schurstructure(R, nothing, ul)
-function _schurstructure(R::AbstractMatrix, S::Union{AbstractMatrix,Nothing}, ul::Union{Val{:U}, Val{:L}})
-    n = size(R,1)
+_schurstructure(S::AbstractMatrix, ul::Union{Val{:U}, Val{:L}}) = _schurstructure(S, nothing, ul)
+function _schurstructure(S::AbstractMatrix, T::Union{AbstractMatrix,Nothing}, ul::Union{Val{:U}, Val{:L}})
+    n = size(S,1)
 
-
-    d = Vector{Int}(undef, n) # block sizes
-    b = Vector{UnitRange{Int}}(undef, n) # block indices (do not use UnitRange{Int32}, julia issue #40931)
+    block_indicies = Vector{UnitRange{Int}}(undef, n) # indices of each block (do not use UnitRange{Int32}, julia issue #40931)
 
     # Create function for checking if the offdiagonal element below (:U) / to the right (:L) of element (j,j) is zero
     is_offdiag_zero =
         if ul === Val(:U)
-            S === nothing ? j -> iszero(R[j+1, j]) : j -> iszero(R[j+1, j]) && iszero(S[j+1, j])
+            T === nothing ? j -> iszero(S[j+1, j]) : j -> iszero(S[j+1, j]) && iszero(T[j+1, j])
         else
-            S === nothing ? j -> iszero(R[j, j+1]) : j -> iszero(R[j, j+1]) && iszero(S[j, j+1])
+            T === nothing ? j -> iszero(S[j, j+1]) : j -> iszero(S[j, j+1]) && iszero(T[j, j+1])
         end
 
     j = 1 # current column (if :U) or row (if :L) index
     k = 0 # block number
     while j <= n
-        j >= 2 && !is_offdiag_zero(j-1) && error("Matrix is not on Schur form")
-        k += 1
-        if j == n
-            d[k] = 1
+        j >= 2 && !is_offdiag_zero(j-1) && error("Matrix is not on Schur form / Incompatible Schur structures")
+
+        k = k + 1
+        # Check if the blocksize is 1 or 2
+        if j == n || is_offdiag_zero(j)
+            block_indicies[k] = j:j
+            j += 1
         else
-            d[k] = is_offdiag_zero(j) ? 1 : 2
+            block_indicies[k] = j:j+1
+            j += 2
         end
-        b[k] = j:j+d[k]-1
-        j += d[k]
     end
-    resize!(d, k)
-    resize!(b, k)
+
     # k now contains the total number of blocks
-    return d, b, k
+    return resize!(block_indicies, k), k
 end
 
 

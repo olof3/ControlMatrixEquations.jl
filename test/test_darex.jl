@@ -1,6 +1,6 @@
 @testset "DAREX tests" begin
 
-darex_tests = [("1.2", Dict(), 1e-11),
+darex_tests = [("1.2", Dict(), 3e-11),
                ("1.3", Dict(), 1e-14),
                ("1.4", Dict(), 1e-15),
                ("1.5", Dict(), 1e-11),
