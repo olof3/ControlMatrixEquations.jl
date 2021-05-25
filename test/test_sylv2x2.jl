@@ -13,8 +13,8 @@ for m=1:2
 
         C = reshape(10.0 .+ (1:m*n), m, n)
 
-        X = ControlMatrixEquations._sylvd!(A, B, copy(C))
-        @test norm(sylvd_residual(X, A, B, C)) < 1e-14
+        X = ControlMatrixEquations._sylvc!(A, B, copy(C))
+        @test norm(sylvc_residual(X, A, B, C)) < 1e-14
 
         X = ControlMatrixEquations._sylvd!(A, B, copy(C))
         @test norm(sylvd_residual(X, A, B, C)) < 1e-14
