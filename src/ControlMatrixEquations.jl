@@ -26,11 +26,11 @@ include("riccati.jl")
 # Infer the algorithm based on the type of the problem data
 function _infer_sylvalg(A, B, C)
     T = promote_type(eltype(A), eltype(B), Float64)
-    if hasmethod(schur!, (Matrix{T},))
-        return Val(:bartstew)
-    else
-        return Val(:naive)
-    end
+    return hasmethod(schur!, (Matrix{T},)) ?  Val(:bartstew) : Val(:naive)
+end
+function _infer_sylvalg(A, B, C, E, F)
+    T = promote_type(eltype(A), eltype(B), eltype(E), eltype(F), Float64)
+    return hasmethod(schur!, (Matrix{T},Matrix{T})) ?  Val(:bartstew) : Val(:naive)
 end
 
 sylvc(A, B, C) = sylvc(A, B, C, _infer_sylvalg(A,B,C))
@@ -38,9 +38,9 @@ sylvd(A, B, C) = sylvd(A, B, C, _infer_sylvalg(A,B,C))
 lyapc(A, Q) = lyapc(A, Q, _infer_sylvalg(A,A,Q))
 lyapd(A, Q) = lyapd(A, Q, _infer_sylvalg(A,A,Q))
 
-sylvg(A, B, C, E, F) = sylvg(A, B, C, E, F, Val(:bartstew))
-lyapc(A, Q, E) = lyapc(A, Q, E, Val(:bartstew))
-lyapd(A, Q, E) = lyapd(A, Q, E, Val(:bartstew))
+sylvg(A, B, C, E, F) = sylvg(A, B, C, E, F, _infer_sylvalg(A,B,C,E,F))
+lyapc(A, Q, E) = lyapc(A, Q, E, _infer_sylvalg(A,E',Q,E,A'))
+lyapd(A, Q, E) = lyapd(A, Q, E, _infer_sylvalg(A,A',Q,E,E'))
 
 
 ## Special cases

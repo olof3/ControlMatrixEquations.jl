@@ -202,8 +202,8 @@ function _sylvc_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Va
 end
 function _sylvc_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Val{:lyap}}, ::Val{:realschur})
 
-    _, ba, nblocksa = _schurstructure(A, I(size(A,1)), Val(:L)) # A is assumed upper quasi triangualar
-    _, bb, nblocksb = _schurstructure(B, I(size(B,1)), Val(:U))
+    ba, nblocksa = _schurstructure(A, I(size(A,1)), Val(:L)) # A is assumed upper quasi triangualar
+    bb, nblocksb = _schurstructure(B, I(size(B,1)), Val(:U))
 
     @inbounds for j=1:nblocksb
         i0 = (alg === Val(:lyap) ? j : 1)
@@ -287,8 +287,8 @@ function _sylvd_schur!(A::Matrix, B::Matrix, C::Matrix, alg::Union{Val{:sylv},Va
     G = zeros(eltype(C), size(C)) # G keeps track of A*X for improved performance
 
     # get block dimensions, block indices, nbr of blocks
-    _, ba, nblocksa = _schurstructure(A, Val(:L)) # A is assumed upper quasi triangualar
-    _, bb, nblocksb = _schurstructure(B, Val(:U))
+    ba, nblocksa = _schurstructure(A, Val(:L)) # A is assumed upper quasi triangualar
+    bb, nblocksb = _schurstructure(B, Val(:U))
 
     @inbounds for j=1:nblocksb
         i0 = (alg === Val(:lyap) ? j : 1)
@@ -367,8 +367,8 @@ function _sylvg_schur!(A::Matrix, B::Matrix, C::Matrix, E::Matrix, F::Matrix, al
     H = zeros(eltype(C), size(A,1), size(B, 1)) # H keeps track of E*X for improved performance
 
     # get block dimensions, block indices, nbr of blocks
-    _, ba, nblocksa = _schurstructure(A, E, Val(:L))
-    _, bb, nblocksb = _schurstructure(B, F, Val(:U))
+    ba, nblocksa = _schurstructure(A, E, Val(:L))
+    bb, nblocksb = _schurstructure(B, F, Val(:U))
 
     @inbounds for j=1:nblocksb
         i0 = (alg === Val(:lyap) ? j : 1)
