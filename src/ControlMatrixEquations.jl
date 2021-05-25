@@ -64,8 +64,7 @@ lyapd(A::UniformScaling, Q, E::UniformScaling) = -Q / (abs2(A.λ) - abs2(E.λ))
 
 
 
-# The following should preferably be fixed in LinearAlgebra, there is an issue posted...
-LinearAlgebra.schur(A::AbstractMatrix{T}) where T = schur!(LinearAlgebra.copy_oftype(A, LinearAlgebra.eigtype(T)))
+# The following should preferably be fixed in LinearAlgebra, issue #40941
 function LinearAlgebra.schur(A::AbstractMatrix{T1}, B::AbstractMatrix{T2}) where {T1, T2}
     T = promote_type(LinearAlgebra.eigtype(T1), LinearAlgebra.eigtype(T2))
     schur!(LinearAlgebra.copy_oftype(A, T), LinearAlgebra.copy_oftype(B, T))
