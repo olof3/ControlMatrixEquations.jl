@@ -97,8 +97,9 @@ function lyapc(A, Q, ::Val{:bartstew})
     QU = Q*U
     Q2 = U'*QU;
 
-    Y = _sylvd_schur!(Matrix(At2'), At2, lmul!(-1, Q2), Val(:lyap))
+    Y = _sylvc_schur!(Matrix(At2'), At2, lmul!(-1, Q2), Val(:lyap))
 
+    # Compute X = Y*U*Y'
     YUt = QU # Recycle mem 
 
     mul!(YUt,Y,U')
